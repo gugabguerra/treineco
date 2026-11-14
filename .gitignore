@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+vendor/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Build output
+out
+dist
+build
+*.tgz
+
+# Logs
+logs
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Environment (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Caches
+.eslintcache
+.cache
+*.tsbuildinfo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage/
+.coverage
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Agent & tool state
+.codebuddy/
+.agent/
+.agents/
+.claude/
+.cursor/
+.gemini/
+.github/skills/
+.opencode/
+.qoder/
+.qwen/
+.trae/
+.playwright-mcp/
+
+# Runtime state
+data/
+*.tmp
+
+# Local scope (planning notes, private hosts, credentials) — never committed
+docs/local/
+
+# Android / Gradle
+.gradle/
+.kotlin/
+local.properties
+*.iml
+*.apk
+*.aab
+captures/
+.externalNativeBuild/
+.cxx/
