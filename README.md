@@ -9,6 +9,10 @@ It is a single offline app. All data stays in one file in the app's private stor
 no account, no server, no network access. Uninstalling the app or clearing its data deletes
 everything.
 
+![GymPlan screens: plan with today's ticks, exercise detail with weight chart, body weight, settings, new-exercise dialog](docs/screenshots/overview.png)
+
+Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no real records).
+
 ## Project status
 
 - Hobby project for personal use, published as-is. No support offered: issues and pull requests

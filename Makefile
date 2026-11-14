@@ -15,7 +15,7 @@ help: ## Show available tasks
 
 run: ## Install the debug build on the connected device/emulator and launch it
 	$(GRADLE) installDebug
-	adb shell am start -n $(APP_ID)/.MainActivity
+	adb shell am start -n $(APP_ID)/com.example.gymplan.MainActivity
 
 build: ## Build the debug APK (app/build/outputs/apk/debug/)
 	$(GRADLE) assembleDebug
