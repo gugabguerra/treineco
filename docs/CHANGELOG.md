@@ -5,6 +5,8 @@ file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-14
+
 ### Added
 
 - Training plans with strength exercises: sets, reps, weight, seat adjustment and other
@@ -22,6 +24,10 @@ file.
   Android 13+, plus a 512 px Play Store version.
 - Settings screen with an in-app language choice; Portuguese (Brazil) translation.
 - Signed, minified release build (`make release`).
+- Long-press a plan card for a menu: sort plans, clone plan, rename, delete (replaces the rename
+  and delete buttons).
+- Long-press an exercise card to clone the exercise (or delete it).
+- New exercises are pre-filled with the sets, reps and weight of the last strength exercise added.
 
 ### Changed
 
@@ -37,6 +43,8 @@ file.
   hide the `0/0 done` count; the new-plan chip and *Completed today* button use real icons.
 - Plan chips replaced by plan cards with a progress bar for today's ticks; *New plan* is a dashed
   card at the end of the row.
+- A plan's ticks now clear 24 h after its last tick instead of at midnight.
+- Cardio exercises no longer have a seat adjustment field.
 
 ### Fixed
 

@@ -17,6 +17,12 @@
     <string name="plan_name_hint">Name (e.g. Day A – Legs)</string>
     <string name="rename_plan">Rename plan</string>
     <string name="delete_plan">Delete plan</string>
+    <string name="sort_plans">Sort plans</string>
+    <string name="clone_plan">Clone plan</string>
+    <string name="clone_exercise">Clone exercise</string>
+    <string name="copy_name">%s (copy)</string>
+    <string name="move_up">Move %s up</string>
+    <string name="move_down">Move %s down</string>
     <string name="confirm_delete_plan">\"%s\" and all its exercises and history will be deleted.</string>
     <string name="empty_no_plans">Create your first plan to start adding exercises.</string>
     <string name="exercises">Exercises</string>
@@ -48,7 +54,7 @@
     <string name="reps_value">%s reps</string>
     <string name="seat">Seat</string>
     <string name="adjustments">Adjustments</string>
-    <string name="completed_undo">Completed today · undo</string>
+    <string name="completed_undo">Completed · undo</string>
     <string name="mark_complete">Mark complete</string>
     <string name="update_weight">Update weight / settings</string>
     <string name="update_duration">Update duration / settings</string>

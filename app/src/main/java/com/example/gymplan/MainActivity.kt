@@ -18,6 +18,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -63,6 +64,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -76,6 +78,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.delay
 import java.io.File
 import java.text.DateFormat
 import java.util.Date
@@ -176,21 +179,36 @@ fun App(store: Store) {
     val plans = store.data.plans
     val plan = plans.find { it.id == planId } ?: plans.firstOrNull()
     val ex = plan?.exercises?.find { it.id == exId }
+    val now = rememberNow()
+    // Persist the 24 h expiry of ticks; writes only when some plan's ticks actually expired.
+    LaunchedEffect(now) { if (store.data.expireDone(now) !== store.data) store.update { it.expireDone(now) } }
     BackHandler(enabled = ex != null) { exId = null }
-    if (plan != null && ex != null) ExerciseScreen(store, plan, ex, onBack = { exId = null })
-    else HomeScreen(store, tab, plan, onTab = { tab = it }, onSelectPlan = { planId = it }, onOpen = { exId = it })
+    if (plan != null && ex != null) ExerciseScreen(store, plan, ex, now, onBack = { exId = null })
+    else HomeScreen(store, tab, plan, now, onTab = { tab = it }, onSelectPlan = { planId = it }, onOpen = { exId = it })
+}
+
+/** Wall-clock time that ticks every minute, so time-based state (tick expiry) recomposes. */
+@Composable
+fun rememberNow(): Long {
+    val now by produceState(System.currentTimeMillis()) {
+        while (true) {
+            delay(60_000)
+            value = System.currentTimeMillis()
+        }
+    }
+    return now
 }
 
 // ---------- Home ----------
 
 @Composable
-fun HomeScreen(store: Store, tab: Int, plan: Plan?, onTab: (Int) -> Unit, onSelectPlan: (Long) -> Unit, onOpen: (Long) -> Unit) {
+fun HomeScreen(store: Store, tab: Int, plan: Plan?, now: Long, onTab: (Int) -> Unit, onSelectPlan: (Long) -> Unit, onOpen: (Long) -> Unit) {
     var dialog by remember { mutableStateOf<String?>(null) }
     Box(Modifier.fillMaxSize()) {
         // Material fade-through between top-level destinations.
         Crossfade(tab, animationSpec = tween(180), label = "tab") { t ->
             when (t) {
-                0 -> PlansTab(store, plan, onSelectPlan, onOpen, onDialog = { dialog = it })
+                0 -> PlansTab(store, plan, now, onSelectPlan, onOpen, onDialog = { dialog = it })
                 1 -> BodyTab(store)
                 else -> SettingsTab()
             }
@@ -211,11 +229,22 @@ fun HomeScreen(store: Store, tab: Int, plan: Plan?, onTab: (Int) -> Unit, onSele
             store.update { it.upsertPlan(plan.copy(name = name)) }
             close()
         }
+        "clonePlan" -> if (plan != null) TextDialog(stringResource(R.string.clone_plan), stringResource(R.string.name),
+            stringResource(R.string.copy_name, plan.name), close) { name ->
+            val before = store.data.plans.map { it.id }.toSet()
+            store.update { it.clonePlan(plan.id, name) }
+            store.data.plans.firstOrNull { it.id !in before }?.let { onSelectPlan(it.id) }
+            close()
+        }
+        "sortPlans" -> SortPlansDialog(store.data.plans, close) { ids ->
+            store.update { it.reorderPlans(ids) }
+            close()
+        }
         "deletePlan" -> if (plan != null) ConfirmDialog(stringResource(R.string.confirm_delete_plan, plan.name), close) {
             store.update { it.deletePlan(plan.id) }
             close()
         }
-        "exercise" -> if (plan != null) ExerciseDialog(null, close) { e ->
+        "exercise" -> if (plan != null) ExerciseDialog(null, store.data.defaults, close) { e ->
             store.update { it.upsertExercise(plan.id, e) }
             close()
         }
@@ -227,12 +256,14 @@ fun HomeScreen(store: Store, tab: Int, plan: Plan?, onTab: (Int) -> Unit, onSele
 }
 
 @Composable
-fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (Long) -> Unit, onDialog: (String) -> Unit) {
+fun PlansTab(store: Store, plan: Plan?, now: Long, onSelectPlan: (Long) -> Unit, onOpen: (Long) -> Unit, onDialog: (String) -> Unit) {
     val plans = store.data.plans
     val listState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
     val gap = with(LocalDensity.current) { 12.dp.toPx() }
+    var menu by remember { mutableStateOf<Long?>(null) }
     var toDelete by remember { mutableStateOf<Exercise?>(null) }
+    var toClone by remember { mutableStateOf<Exercise?>(null) }
 
     // Drag-to-reorder: a local copy of the order follows the finger; it is saved once on release.
     var order by remember(plan?.id, plan?.exercises) { mutableStateOf(plan?.exercises.orEmpty()) }
@@ -255,7 +286,7 @@ fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (L
     LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 120.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Header(stringResource(R.string.title_training)) }
         item {
-            PlanCards(plans, plan, { p -> p.exercises.count { store.data.isDone(it.id) } }, onSelectPlan) { onDialog("plan") }
+            PlanCards(plans, plan, { p -> p.exercises.count { store.data.isDone(it.id, now) } }, onSelectPlan, onDialog)
         }
         if (plan == null) {
             item { Empty(stringResource(R.string.empty_no_plans)) }
@@ -264,7 +295,7 @@ fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (L
         item {
             Row(Modifier.padding(start = 20.dp, end = 12.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.exercises), style = MaterialTheme.typography.titleMedium)
-                val doneCount = plan.exercises.count { store.data.isDone(it.id) }
+                val doneCount = plan.exercises.count { store.data.isDone(it.id, now) }
                 Text(
                     // An empty plan has nothing to count: "0/0 done" is noise.
                     if (plan.exercises.isEmpty()) "" else stringResource(R.string.done_count, doneCount, plan.exercises.size),
@@ -279,8 +310,6 @@ fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (L
                         Text(stringResource(R.string.clear), style = MaterialTheme.typography.labelLarge)
                     }
                 }
-                IconButton({ onDialog("rename") }) { Icon(Icons.Default.Edit, stringResource(R.string.rename_plan), tint = Muted) }
-                IconButton({ onDialog("deletePlan") }) { Icon(Icons.Default.Delete, stringResource(R.string.delete_plan), tint = Muted) }
             }
         }
         if (plan.exercises.isEmpty()) item { Empty(stringResource(R.string.empty_no_exercises)) }
@@ -288,7 +317,7 @@ fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (L
             val dragging = e.id == dragId
             ExerciseCard(
                 e,
-                done = store.data.isDone(e.id),
+                done = store.data.isDone(e.id, now),
                 modifier = if (dragging) Modifier.zIndex(1f).graphicsLayer {
                     translationY = dragY
                     scaleX = 1.03f
@@ -320,10 +349,15 @@ fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (L
                 onToggle = { store.update { it.toggleDone(e.id) } },
                 onLongClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    toDelete = e
+                    menu = e.id
                 },
                 onClick = { onOpen(e.id) },
-            )
+            ) {
+                AppMenu(menu == e.id, { menu = null }, listOf(
+                    MenuAction(ImageVector.vectorResource(R.drawable.ic_copy), stringResource(R.string.clone_exercise)) { toClone = e },
+                    MenuAction(Icons.Default.Delete, stringResource(R.string.delete_exercise), destructive = true) { toDelete = e },
+                ))
+            }
         }
     }
     toDelete?.let { e ->
@@ -332,12 +366,20 @@ fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (L
             toDelete = null
         }
     }
+    toClone?.let { e ->
+        TextDialog(stringResource(R.string.clone_exercise), stringResource(R.string.name),
+            stringResource(R.string.copy_name, e.name), onDismiss = { toClone = null }) { name ->
+            store.update { it.cloneExercise(plan!!.id, e.id, name) }
+            toClone = null
+        }
+    }
 }
 
 @Composable
 fun ExerciseCard(
     e: Exercise, done: Boolean, modifier: Modifier, handle: Modifier,
     onToggle: () -> Unit, onLongClick: () -> Unit, onClick: () -> Unit,
+    menu: @Composable () -> Unit = {},
 ) = GlassCard(
     modifier.padding(horizontal = 20.dp).fillMaxWidth().alpha(if (done) 0.6f else 1f),
     // End padding is 8dp: the check's 48dp touch area puts its visible ring 16dp from the edge.
@@ -353,7 +395,7 @@ fun ExerciseCard(
             Text(
                 listOfNotNull(
                     if (e.cardio) e.intensity.ifBlank { stringResource(R.string.cardio) } else "${e.sets} × ${e.reps}",
-                    e.seat.takeIf { it.isNotBlank() }?.let { stringResource(R.string.seat_value, it) },
+                    e.seat.takeIf { !e.cardio && it.isNotBlank() }?.let { stringResource(R.string.seat_value, it) },
                 ).joinToString("  ·  "),
                 style = MaterialTheme.typography.bodyMedium, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
@@ -364,6 +406,7 @@ fun ExerciseCard(
         }
         CheckCircle(done, e.name, onToggle)
     }
+    menu() // popup anchored to the card
 }
 
 @Composable
@@ -445,11 +488,11 @@ fun SettingsTab() {
 // ---------- Exercise ----------
 
 @Composable
-fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, onBack: () -> Unit) {
+fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, now: Long, onBack: () -> Unit) {
     var editing by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
     val history = store.data.history[ex.id].orEmpty()
-    val done = store.data.isDone(ex.id)
+    val done = store.data.isDone(ex.id, now)
     LazyColumn(
         Modifier.navigationBarsPadding(),
         contentPadding = PaddingValues(bottom = 32.dp),
@@ -478,8 +521,10 @@ fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, onBack: () -> Unit) {
         }
         item {
             GlassCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth()) {
-                InfoRow(stringResource(R.string.seat), ex.seat)
-                HorizontalDivider(Modifier.padding(vertical = 12.dp), color = GlassBorder)
+                if (!ex.cardio) {
+                    InfoRow(stringResource(R.string.seat), ex.seat)
+                    HorizontalDivider(Modifier.padding(vertical = 12.dp), color = GlassBorder)
+                }
                 InfoRow(stringResource(R.string.adjustments), ex.notes)
             }
         }
@@ -504,7 +549,7 @@ fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, onBack: () -> Unit) {
         item { ChartCard(history, ex.unit) }
         items(history.reversed(), key = { it.date }) { h -> HistoryRow(h, ex.unit) }
     }
-    if (editing) ExerciseDialog(ex, onDismiss = { editing = false }) { e ->
+    if (editing) ExerciseDialog(ex, store.data.defaults, onDismiss = { editing = false }) { e ->
         store.update { it.upsertExercise(plan.id, e) }
         editing = false
     }
@@ -517,8 +562,11 @@ fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, onBack: () -> Unit) {
 // ---------- Plan selector ----------
 
 /** Plan cards that carry today's progress, so picking a plan doubles as a status read. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PlanCards(plans: List<Plan>, selected: Plan?, doneOf: (Plan) -> Int, onSelect: (Long) -> Unit, onNew: () -> Unit) {
+fun PlanCards(plans: List<Plan>, selected: Plan?, doneOf: (Plan) -> Int, onSelect: (Long) -> Unit, onDialog: (String) -> Unit) {
+    val haptic = LocalHapticFeedback.current
+    var menu by remember { mutableStateOf<Long?>(null) }
     val shape = RoundedCornerShape(20.dp)
     val card = Modifier.width(148.dp).heightIn(min = 96.dp)
     LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -530,7 +578,13 @@ fun PlanCards(plans: List<Plan>, selected: Plan?, doneOf: (Plan) -> Int, onSelec
             Column(
                 card.clip(shape).background(if (on) Accent.copy(alpha = 0.12f) else Glass)
                     .border(if (on) 1.5.dp else 1.dp, if (on) Accent else GlassBorder, shape)
-                    .selectable(on, role = Role.Tab) { onSelect(p.id) }.padding(14.dp),
+                    // Long-press selects the plan too, so the menu's actions apply to the selected plan.
+                    .combinedClickable(role = Role.Tab, onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onSelect(p.id)
+                        menu = p.id
+                    }) { onSelect(p.id) }
+                    .semantics { this.selected = on }.padding(14.dp),
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(p.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
@@ -545,6 +599,12 @@ fun PlanCards(plans: List<Plan>, selected: Plan?, doneOf: (Plan) -> Int, onSelec
                         color = if (n > 0 && done == n) Accent else Muted, style = MaterialTheme.typography.labelSmall,
                     )
                 }
+                AppMenu(menu == p.id, { menu = null }, listOfNotNull(
+                    if (plans.size > 1) MenuAction(ImageVector.vectorResource(R.drawable.ic_sort), stringResource(R.string.sort_plans)) { onDialog("sortPlans") } else null,
+                    MenuAction(ImageVector.vectorResource(R.drawable.ic_copy), stringResource(R.string.clone_plan)) { onDialog("clonePlan") },
+                    MenuAction(Icons.Default.Edit, stringResource(R.string.rename_plan)) { onDialog("rename") },
+                    MenuAction(Icons.Default.Delete, stringResource(R.string.delete_plan), destructive = true) { onDialog("deletePlan") },
+                ))
             }
         }
         item {
@@ -553,7 +613,7 @@ fun PlanCards(plans: List<Plan>, selected: Plan?, doneOf: (Plan) -> Int, onSelec
                 card.clip(shape).drawBehind {
                     drawRoundRect(dash, cornerRadius = CornerRadius(20.dp.toPx()),
                         style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx()))))
-                }.clickable(onClick = onNew).padding(14.dp),
+                }.clickable { onDialog("plan") }.padding(14.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -748,6 +808,27 @@ fun ChartCard(entries: List<WeightEntry>, unit: String = "kg") = GlassCard(Modif
     Text("${fmt(min)} $unit", style = MaterialTheme.typography.labelSmall, color = Muted)
 }
 
+class MenuAction(val icon: ImageVector, val label: String, val destructive: Boolean = false, val onClick: () -> Unit)
+
+/** Long-press menu in the dialog palette; destructive actions are red. */
+@Composable
+fun AppMenu(expanded: Boolean, onDismiss: () -> Unit, actions: List<MenuAction>) = DropdownMenu(
+    expanded, onDismiss,
+    shape = RoundedCornerShape(16.dp), containerColor = DialogBg, border = BorderStroke(1.dp, GlassBorder),
+) {
+    actions.forEach { a ->
+        val c = if (a.destructive) Danger else Ink
+        DropdownMenuItem(
+            text = { Text(a.label, color = c, style = MaterialTheme.typography.bodyLarge) },
+            leadingIcon = { Icon(a.icon, null, tint = c) },
+            onClick = {
+                onDismiss()
+                a.onClick()
+            },
+        )
+    }
+}
+
 // ---------- Dialogs ----------
 
 /** Shared dialog chrome: glass border, rounded corners, filled confirm button (red when destructive). */
@@ -839,11 +920,36 @@ fun NumberDialog(title: String, label: String, onDismiss: () -> Unit, onSave: (D
 }
 
 @Composable
-fun ExerciseDialog(initial: Exercise?, onDismiss: () -> Unit, onSave: (Exercise) -> Unit) {
+fun SortPlansDialog(plans: List<Plan>, onDismiss: () -> Unit, onSave: (List<Long>) -> Unit) {
+    var order by remember { mutableStateOf(plans) }
+    fun move(i: Int, j: Int) { order = order.toMutableList().apply { add(j, removeAt(i)) } }
+    AppDialog(stringResource(R.string.sort_plans), stringResource(R.string.save), onDismiss, { onSave(order.map { it.id }) }) {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            order.forEachIndexed { i, p ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(p.name, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    IconButton({ move(i, i - 1) }, enabled = i > 0) {
+                        Icon(Icons.Default.KeyboardArrowUp, stringResource(R.string.move_up, p.name),
+                            tint = if (i > 0) Ink else Muted.copy(alpha = 0.3f))
+                    }
+                    IconButton({ move(i, i + 1) }, enabled = i < order.lastIndex) {
+                        Icon(Icons.Default.KeyboardArrowDown, stringResource(R.string.move_down, p.name),
+                            tint = if (i < order.lastIndex) Ink else Muted.copy(alpha = 0.3f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** New exercises start from [defaults]: the sets, reps and weight of the last one added. */
+@Composable
+fun ExerciseDialog(initial: Exercise?, defaults: ExerciseDefaults, onDismiss: () -> Unit, onSave: (Exercise) -> Unit) {
     var name by remember { mutableStateOf(initial?.name ?: "") }
-    var sets by remember { mutableStateOf(initial?.sets?.toString() ?: "3") }
-    var reps by remember { mutableStateOf(initial?.reps ?: "10") }
-    var weight by remember { mutableStateOf(initial?.weight?.let(::fmt) ?: "") }
+    var sets by remember { mutableStateOf((initial?.sets ?: defaults.sets).toString()) }
+    var reps by remember { mutableStateOf(initial?.reps ?: defaults.reps) }
+    var weight by remember { mutableStateOf((initial?.weight ?: defaults.weight)?.let(::fmt) ?: "") }
     var seat by remember { mutableStateOf(initial?.seat ?: "") }
     var notes by remember { mutableStateOf(initial?.notes ?: "") }
     var cardio by remember { mutableStateOf(initial?.cardio ?: false) }
@@ -861,7 +967,8 @@ fun ExerciseDialog(initial: Exercise?, onDismiss: () -> Unit, onSave: (Exercise)
         onConfirm = {
             onSave(
                 Exercise(
-                    initial?.id ?: newId(), name.trim(), setsN ?: 1, reps.trim(), weightN ?: 0.0, seat.trim(), notes.trim(),
+                    initial?.id ?: newId(), name.trim(), setsN ?: 1, reps.trim(), weightN ?: 0.0,
+                    if (cardio) "" else seat.trim(), notes.trim(),
                     cardio, minutesN ?: 0, intensity.trim(),
                 )
             )
@@ -880,8 +987,8 @@ fun ExerciseDialog(initial: Exercise?, onDismiss: () -> Unit, onSave: (Exercise)
                     Field(reps, { reps = it }, stringResource(R.string.reps), Modifier.weight(1f))
                 }
                 Field(weight, { weight = it }, stringResource(R.string.weight_kg), keyboard = KeyboardType.Decimal)
+                Field(seat, { seat = it }, stringResource(R.string.seat_adjustment))
             }
-            Field(seat, { seat = it }, stringResource(R.string.seat_adjustment))
             Field(notes, { notes = it }, stringResource(R.string.other_adjustments), singleLine = false, minLines = 2)
         }
     }

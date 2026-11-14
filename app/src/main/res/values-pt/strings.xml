@@ -17,6 +17,12 @@
     <string name="plan_name_hint">Nome (ex.: Treino A – Pernas)</string>
     <string name="rename_plan">Renomear treino</string>
     <string name="delete_plan">Excluir treino</string>
+    <string name="sort_plans">Ordenar planos</string>
+    <string name="clone_plan">Clonar plano</string>
+    <string name="clone_exercise">Clonar exercício</string>
+    <string name="copy_name">%s (cópia)</string>
+    <string name="move_up">Mover %s para cima</string>
+    <string name="move_down">Mover %s para baixo</string>
     <string name="confirm_delete_plan">\"%s\" e todos os seus exercícios e histórico serão excluídos.</string>
     <string name="empty_no_plans">Crie seu primeiro treino para começar a adicionar exercícios.</string>
     <string name="exercises">Exercícios</string>
@@ -49,7 +55,7 @@
     <string name="reps_value">%s reps</string>
     <string name="seat">Assento</string>
     <string name="adjustments">Ajustes</string>
-    <string name="completed_undo">Feito hoje · desfazer</string>
+    <string name="completed_undo">Feito · desfazer</string>
     <string name="mark_complete">Marcar como feito</string>
     <string name="update_weight">Atualizar carga / ajustes</string>
     <string name="update_duration">Atualizar duração / ajustes</string>

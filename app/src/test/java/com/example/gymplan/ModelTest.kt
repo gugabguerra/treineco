@@ -1,6 +1,7 @@
 package com.example.gymplan
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 class ModelTest {
@@ -18,13 +19,63 @@ class ModelTest {
     }
 
     @Test
-    fun completionIsPerDay() {
-        val d = Data().upsertPlan(Plan(10, "A")).upsertExercise(10, ex).toggleDone(1, day = 5)
-        assertEquals(true, d.isDone(1, day = 5))
-        assertEquals(false, d.isDone(1, day = 6))           // next day starts unchecked
-        assertEquals(false, d.toggleDone(1, day = 5).isDone(1, day = 5))
-        assertEquals(emptyMap<Long, Long>(), d.deleteExercise(10, 1).done)
-        assertEquals(false, d.clearDone(listOf(1L)).isDone(1, day = 5))
+    fun ticksClearTogether24hAfterTheLastOne() {
+        val a = ex.copy(id = 1); val b = ex.copy(id = 2)
+        var d = Data().upsertPlan(Plan(10, "A", listOf(a, b))).toggleDone(1, now = 0)
+        d = d.toggleDone(2, now = 10 * 3_600_000L)                     // ticked 10 h later
+        assertEquals(true, d.isDone(1, now = DAY_MS + 1))               // 24 h counts from the last tick
+        assertEquals(false, d.isDone(1, now = 34 * 3_600_000L))
+        assertEquals(false, d.isDone(2, now = 34 * 3_600_000L))
+        assertEquals(emptyMap<Long, Long>(), d.expireDone(now = 34 * 3_600_000L).done)
+        assertSame(d, d.expireDone(now = DAY_MS))                       // nothing stale: same instance
+        // ticking a stale plan starts over instead of reviving the old ticks
+        val next = d.toggleDone(2, now = 50 * 3_600_000L)
+        assertEquals(false, next.isDone(1, now = 50 * 3_600_000L))
+        assertEquals(true, next.isDone(2, now = 50 * 3_600_000L))
+        assertEquals(false, d.toggleDone(2, now = 11 * 3_600_000L).isDone(2, now = 11 * 3_600_000L))
+        assertEquals(mapOf(2L to 10 * 3_600_000L), d.deleteExercise(10, 1).done)
+        assertEquals(false, d.clearDone(listOf(1L)).isDone(1, now = 11 * 3_600_000L))
+    }
+
+    @Test
+    fun legacyEpochDayTicksAreRead() {
+        val json = """{"plans":[{"id":10,"name":"A","exercises":[]}],"done":{"1":20000}}"""
+        assertEquals(mapOf(1L to 20000 * DAY_MS), parseData(json).done)
+        assertEquals(ExerciseDefaults(), parseData(json).defaults)
+    }
+
+    @Test
+    fun newStrengthExerciseSetsDefaults() {
+        var d = Data().upsertPlan(Plan(10, "A")).upsertExercise(10, ex)
+        assertEquals(ExerciseDefaults(4, "10", 80.0), d.defaults)
+        d = d.upsertExercise(10, ex.copy(weight = 90.0))                // editing keeps them
+        assertEquals(ExerciseDefaults(4, "10", 80.0), d.defaults)
+        d = d.upsertExercise(10, Exercise(2, "Bike", 1, "", 0.0, "", "", cardio = true, minutes = 20))
+        assertEquals(ExerciseDefaults(4, "10", 80.0), d.defaults)       // cardio keeps them
+    }
+
+    @Test
+    fun cloneAndReorderPlans() {
+        val a = ex.copy(id = 1); val b = ex.copy(id = 2)
+        var next = 100L
+        var d = Data().upsertPlan(Plan(10, "A", listOf(a, b))).upsertPlan(Plan(20, "B")).toggleDone(1, now = 0)
+        d = d.clonePlan(10, "A copy", now = 5) { next++ }
+        assertEquals(listOf(10L, 102L, 20L), d.plans.map { it.id })
+        assertEquals(listOf(100L, 101L), d.plans[1].exercises.map { it.id })
+        assertEquals(listOf("Leg press", "Leg press"), d.plans[1].exercises.map { it.name })
+        assertEquals(listOf(WeightEntry(5, 80.0)), d.history[100])
+        assertEquals(false, d.isDone(100, now = 1))
+        d = d.reorderPlans(listOf(20, 10))
+        assertEquals(listOf(20L, 10L, 102L), d.plans.map { it.id })
+    }
+
+    @Test
+    fun cloneExerciseInsertsAfterOriginal() {
+        val a = ex.copy(id = 1); val b = ex.copy(id = 2)
+        val d = Data().upsertPlan(Plan(10, "A", listOf(a, b))).cloneExercise(10, 1, "Leg press (copy)", now = 7, id = 9)
+        assertEquals(listOf(1L, 9L, 2L), d.plans[0].exercises.map { it.id })
+        assertEquals(a.copy(id = 9, name = "Leg press (copy)"), d.plans[0].exercises[1])
+        assertEquals(listOf(WeightEntry(7, 80.0)), d.history[9])
     }
 
     @Test
@@ -51,7 +102,7 @@ class ModelTest {
             .upsertPlan(Plan(10, "A"))
             .upsertExercise(10, ex, now = 100)
             .copy(body = listOf(WeightEntry(5, 82.5)))
-            .toggleDone(1, day = 20000)
+            .toggleDone(1, now = 1_700_000_000_000L)
             .upsertExercise(10, Exercise(2, "Treadmill", 1, "", 0.0, "", "", true, 25, "8 km/h, 3%"), now = 100)
         assertEquals(d, parseData(d.toJson()))
     }

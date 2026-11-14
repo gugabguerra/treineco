@@ -25,21 +25,23 @@ Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no 
 **Plans & exercises**
 
 - Create several training plans (e.g. "Day A", "Day B") and switch between them with cards at the
-  top of the home screen; each card shows today's progress (`done / total`). Rename or delete a
-  plan.
+  top of the home screen; each card shows the current session's progress (`done / total`).
+  Long-press a plan card to sort the plans, clone the plan (exercises included), rename or delete
+  it.
 - Strength exercises store sets, reps (free text, so `8-12` works), weight in kg, seat adjustment
   and other adjustments / notes.
-- Cardio exercises (treadmill, bike, …) store duration in minutes, speed / incline / level, seat
-  adjustment and notes.
-- Drag the handle on the left of an exercise card to reorder the plan; long-press a card to
-  delete the exercise.
+- Cardio exercises (treadmill, bike, …) store duration in minutes, speed / incline / level and
+  notes.
+- A new exercise starts with the sets, reps and weight of the last strength exercise you added.
+- Drag the handle on the left of an exercise card to reorder the plan; long-press a card to clone
+  or delete the exercise. Clones start their own weight history.
 - Decimal values accept both comma and dot (`42,5` or `42.5`).
 
 **Workout**
 
 - Tick an exercise off with the circle on its card or the *Mark complete* button; the plan shows
-  `done / total` for today. Ticks reset automatically the next day, or tap *Clear* to reset the
-  plan's ticks right away.
+  `done / total`. A plan's ticks clear automatically 24 h after its last tick, or tap *Clear* to
+  reset them right away.
 
 **Progress**
 
