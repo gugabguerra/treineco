@@ -6,9 +6,9 @@ STUDIO_JDK := /Applications/Android Studio.app/Contents/jbr/Contents/Home
 export JAVA_HOME ?= $(shell test -d '$(STUDIO_JDK)' && echo '$(STUDIO_JDK)')
 
 GRADLE := ./gradlew
-APP_ID := com.example.gymplan
+APP_ID := gugabguerra.gymplan
 
-.PHONY: help run build test lint fmt clean
+.PHONY: help run build release test lint fmt clean
 
 help: ## Show available tasks
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -19,6 +19,10 @@ run: ## Install the debug build on the connected device/emulator and launch it
 
 build: ## Build the debug APK (app/build/outputs/apk/debug/)
 	$(GRADLE) assembleDebug
+
+release: ## Build the signed, minified release APK (app/build/outputs/apk/release/); needs docs/local/keystore.properties
+	@test -f docs/local/keystore.properties || { echo "Missing docs/local/keystore.properties (release signing key)"; exit 1; }
+	$(GRADLE) assembleRelease
 
 test: ## Run JVM unit tests
 	$(GRADLE) testDebugUnitTest

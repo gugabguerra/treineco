@@ -32,13 +32,15 @@ can't be enforced by tests or code comments. Routing: feature behavior → READM
 
 ## Run & verify
 
-- Commands: the root `Makefile` (`make run` / `make test` / `make lint` / `make build`) is
-  canonical — keep the lines below and README § Run it in sync with it.
+- Commands: the root `Makefile` (`make run` / `make test` / `make lint` / `make build` /
+  `make release`) is canonical — keep the lines below and README § Run it in sync with it.
+- Release signing: `make release` reads `docs/local/keystore.properties` (gitignored) pointing at
+  `docs/local/release.keystore`; never commit either, never regenerate the key (updates need it).
 - Start: `make run` (needs a device or emulator in `adb devices`; `emulator -list-avds` lists
   local emulators).
 - Tests: `make test`.
 - State: `files/gym.json` in the app's private storage; survives restarts and updates, wiped by
-  uninstall or *Clear data*. Reset on a device: `adb shell pm clear com.example.gymplan`.
+  uninstall or *Clear data*. Reset on a device: `adb shell pm clear gugabguerra.gymplan`.
 - No system JDK on the maintainer's Mac: the Makefile falls back to Android Studio's bundled JBR;
   raw `./gradlew` calls need `JAVA_HOME` set the same way.
 

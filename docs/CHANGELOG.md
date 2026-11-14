@@ -21,9 +21,12 @@ file.
 - App icon: adaptive launcher icon (clipboard with a dumbbell) with a themed-icon layer for
   Android 13+, plus a 512 px Play Store version.
 - Settings screen with an in-app language choice; Portuguese (Brazil) translation.
+- Signed, minified release build (`make release`).
 
 ### Changed
 
+- Application id is now `gugabguerra.gymplan`; it installs as a separate app from earlier
+  `com.example.gymplan` builds, which keep their own data.
 - The add button now sits inside the bottom bar as a flat accent circle instead of a separate
   glowing button.
 - Dialogs restyled: rounded glass look, filled confirm button, red confirm for deletions, and a

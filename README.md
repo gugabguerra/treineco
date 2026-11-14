@@ -61,6 +61,7 @@ Android Studio creates the latter on first open.
 
 ```bash
 make build   # debug APK -> app/build/outputs/apk/debug/app-debug.apk
+make release # signed release APK -> app/build/outputs/apk/release/app-release.apk
 make run     # install on the connected phone/emulator and launch
 make test    # JVM unit tests
 make lint    # Android Lint
@@ -69,13 +70,20 @@ make lint    # Android Lint
 To install on a phone, enable *Developer options → USB debugging*, connect it and run `make run`.
 Alternatively open the folder in Android Studio and press Run.
 
+`make release` builds a minified APK signed with the release key from
+`docs/local/keystore.properties` (gitignored; it points at `docs/local/release.keystore`). Keep a
+backup of both files: updates must be signed with the same key, or Android refuses to install
+them over the existing app. Install it over USB with
+`adb -d install -r app/build/outputs/apk/release/app-release.apk`, or copy the APK to the phone
+and open it there.
+
 ### Logs
 
 The app logs nothing of its own. Crashes show up in logcat:
 
 ```bash
 adb logcat -b crash
-adb logcat --pid=$(adb shell pidof com.example.gymplan)
+adb logcat --pid=$(adb shell pidof gugabguerra.gymplan)
 ```
 
 ### Data
@@ -85,7 +93,7 @@ file + rename). If the file cannot be parsed on startup it is renamed to `gym.js
 and the app starts empty instead of overwriting it. On a debug build you can back it up with:
 
 ```bash
-adb shell run-as com.example.gymplan cat files/gym.json > gym-backup.json
+adb shell run-as gugabguerra.gymplan cat files/gym.json > gym-backup.json
 ```
 
 ## Security notes
