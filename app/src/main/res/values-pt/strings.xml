@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gym Plan</string>
+
+    <!-- Navigation -->
+    <string name="nav_plans">Treinos</string>
+    <string name="nav_body">Corpo</string>
+    <string name="nav_settings">Ajustes</string>
+    <string name="add">Adicionar</string>
+    <string name="back">Voltar</string>
+
+    <!-- Plans -->
+    <string name="title_training">Treino</string>
+    <plurals name="exercises_count">
+        <item quantity="one">%d exercício</item>
+        <item quantity="many">%d exercícios</item>
+        <item quantity="other">%d exercícios</item>
+    </plurals>
+    <string name="new_plan">Novo treino</string>
+    <string name="plan_name_hint">Nome (ex.: Treino A – Pernas)</string>
+    <string name="rename_plan">Renomear treino</string>
+    <string name="delete_plan">Excluir treino</string>
+    <string name="confirm_delete_plan">\"%s\" e todos os seus exercícios e histórico serão excluídos.</string>
+    <string name="empty_no_plans">Crie seu primeiro treino para começar a adicionar exercícios.</string>
+    <string name="exercises">Exercícios</string>
+    <string name="done_count">%1$d/%2$d feitos</string>
+    <string name="clear">Limpar</string>
+    <string name="empty_no_exercises">Nenhum exercício ainda. Toque em + para adicionar.</string>
+    <string name="drag_to_reorder">Arraste para reordenar</string>
+    <string name="mark_done">Marcar como feito</string>
+    <string name="mark_not_done">Desmarcar</string>
+    <string name="seat_value">Assento %s</string>
+
+    <!-- Body -->
+    <string name="title_body">Corpo</string>
+    <string name="empty_no_weighins">Nenhuma pesagem ainda. Toque em + para registrar seu peso.</string>
+    <string name="current_weight">Peso atual</string>
+    <string name="last_weighin">Última pesagem %s</string>
+    <string name="log_body_weight">Registrar peso</string>
+    <string name="weight_kg">Peso (kg)</string>
+    <string name="confirm_delete_entry">A pesagem de %1$s kg de %2$s será excluída.</string>
+
+    <!-- Exercise -->
+    <string name="edit">Editar</string>
+    <string name="delete_exercise">Excluir exercício</string>
+    <string name="confirm_delete_exercise">\"%s\" e seu histórico serão excluídos.</string>
+    <string name="duration">Duração</string>
+    <string name="working_weight">Carga atual</string>
+    <plurals name="sets_count">
+        <item quantity="one">%d série</item>
+        <item quantity="many">%d séries</item>
+        <item quantity="other">%d séries</item>
+    </plurals>
+    <string name="reps_value">%s reps</string>
+    <string name="seat">Assento</string>
+    <string name="adjustments">Ajustes</string>
+    <string name="completed_undo">Feito hoje ✓ (desfazer)</string>
+    <string name="mark_complete">Marcar como feito</string>
+    <string name="update_weight">Atualizar carga / ajustes</string>
+    <string name="update_duration">Atualizar duração / ajustes</string>
+    <string name="evolution">Evolução</string>
+    <string name="need_two_values">Registre pelo menos 2 valores para ver o gráfico.</string>
+    <string name="delta_since">%1$s %2$s desde %3$s</string>
+
+    <!-- Exercise dialog -->
+    <string name="new_exercise">Novo exercício</string>
+    <string name="edit_exercise">Editar exercício</string>
+    <string name="strength">Força</string>
+    <string name="cardio">Cardio</string>
+    <string name="exercise">Exercício</string>
+    <string name="exercise_cardio_hint">Exercício (ex.: Esteira)</string>
+    <string name="sets">Séries</string>
+    <string name="reps">Repetições</string>
+    <string name="duration_min">Duração (min)</string>
+    <string name="intensity">Velocidade / inclinação / nível</string>
+    <string name="seat_adjustment">Ajuste do assento</string>
+    <string name="other_adjustments">Outros ajustes / notas</string>
+
+    <!-- Dialogs -->
+    <string name="save">Salvar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete">Excluir</string>
+    <string name="delete_question">Excluir?</string>
+    <string name="name">Nome</string>
+
+    <!-- Settings -->
+    <string name="title_settings">Ajustes</string>
+    <string name="language">Idioma</string>
+    <string name="lang_system">Padrão do sistema</string>
+    <string name="about">Sobre</string>
+    <string name="version">Versão %s</string>
+    <string name="about_text">Planejador de treinos offline. Seus dados ficam neste celular.</string>
+</resources>

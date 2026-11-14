@@ -78,5 +78,7 @@ Single-component Android project in the standard Gradle shape (`app/` takes the 
   `Exercise.unit`). Deleting an exercise or plan also deletes its `history` and `done` entries.
 - Root composables must provide `LocalContentColor` (there is no `Surface` at the root); without it
   text renders black on the dark background.
+- All UI text lives in `res/values/strings.xml` with a matching entry in
+  `res/values-pt/strings.xml`; never hard-code user-visible strings in Kotlin.
 - Keep private hosts, credentials, tokens, and personal data out of tracked files; `docs/local/` is
   the place for them.

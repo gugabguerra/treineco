@@ -36,6 +36,16 @@ class ModelTest {
     }
 
     @Test
+    fun reorderKeepsAllExercises() {
+        val a = ex.copy(id = 1); val b = ex.copy(id = 2); val c = ex.copy(id = 3)
+        var d = Data().upsertPlan(Plan(10, "A", listOf(a, b, c)))
+        d = d.reorderExercises(10, listOf(3, 1, 2))
+        assertEquals(listOf(3L, 1L, 2L), d.plans[0].exercises.map { it.id })
+        d = d.reorderExercises(10, listOf(2))                       // unlisted ids keep relative order after
+        assertEquals(listOf(2L, 3L, 1L), d.plans[0].exercises.map { it.id })
+    }
+
+    @Test
     fun jsonRoundTrip() {
         val d = Data()
             .upsertPlan(Plan(10, "A"))

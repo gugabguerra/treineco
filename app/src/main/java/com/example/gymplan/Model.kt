@@ -45,6 +45,13 @@ fun Data.isDone(exId: Long, day: Long = today()) = done[exId] == day
 fun Data.toggleDone(exId: Long, day: Long = today()) =
     copy(done = if (isDone(exId, day)) done - exId else done + (exId to day))
 
+/** Puts the plan's exercises in the order of [ids]; ids not listed keep their place at the end. */
+fun Data.reorderExercises(planId: Long, ids: List<Long>): Data {
+    val plan = plans.first { it.id == planId }
+    val pos = ids.withIndex().associate { (i, id) -> id to i }
+    return upsertPlan(plan.copy(exercises = plan.exercises.sortedBy { pos[it.id] ?: Int.MAX_VALUE }))
+}
+
 fun Data.clearDone(exIds: Collection<Long>) = copy(done = done - exIds.toSet())
 
 fun Data.upsertPlan(p: Plan) = copy(

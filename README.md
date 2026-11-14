@@ -26,6 +26,8 @@ everything.
   and other adjustments / notes.
 - Cardio exercises (treadmill, bike, …) store duration in minutes, speed / incline / level, seat
   adjustment and notes.
+- Drag the handle on the left of an exercise card to reorder the plan; long-press a card to
+  delete the exercise.
 - Decimal values accept both comma and dot (`42,5` or `42.5`).
 
 **Workout**
@@ -45,6 +47,8 @@ everything.
 
 - Dark theme with `#7BC4FF` accents, glass-style cards, the Oxanium typeface, and a floating
   bottom bar with the add button built in.
+- Settings: choose the app language — system default, English or Portuguese (Brazil) — without
+  changing the phone's language. Numbers and dates follow the chosen language.
 - Android 8.0 (API 26) or newer.
 
 ## 1. Run it
