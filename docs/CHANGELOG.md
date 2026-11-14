@@ -30,6 +30,8 @@ file.
   handle.
 - UI polish: fade between tabs and a resizing bottom bar; empty plans read "No exercises" and
   hide the `0/0 done` count; the new-plan chip and *Completed today* button use real icons.
+- Plan chips replaced by plan cards with a progress bar for today's ticks; *New plan* is a dashed
+  card at the end of the row.
 
 ### Fixed
 

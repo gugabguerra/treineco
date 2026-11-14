@@ -13,7 +13,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -48,7 +52,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -115,7 +118,6 @@ object Lang {
 // ---------- Theme ----------
 
 val Accent = Color(0xFF7BC4FF)
-val AccentDeep = Color(0xFF4A86F0)
 val OnAccent = Color(0xFF04172A)
 val Bg1 = Color(0xFF060A18)
 val Bg2 = Color(0xFF0B1431)
@@ -253,15 +255,7 @@ fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (L
     LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 120.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Header(stringResource(R.string.title_training)) }
         item {
-            LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(plans, key = { it.id }) { p ->
-                    val n = p.exercises.size
-                    val sub = if (n == 0) stringResource(R.string.no_exercises)
-                        else pluralStringResource(R.plurals.exercises_count, n, n)
-                    Chip(p.name, sub, p.id == plan?.id) { onSelectPlan(p.id) }
-                }
-                item { Chip(null, stringResource(R.string.new_plan), false, icon = Icons.Default.Add) { onDialog("plan") } }
-            }
+            PlanCards(plans, plan, { p -> p.exercises.count { store.data.isDone(it.id) } }, onSelectPlan) { onDialog("plan") }
         }
         if (plan == null) {
             item { Empty(stringResource(R.string.empty_no_plans)) }
@@ -520,6 +514,57 @@ fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, onBack: () -> Unit) {
     }
 }
 
+// ---------- Plan selector ----------
+
+/** Plan cards that carry today's progress, so picking a plan doubles as a status read. */
+@Composable
+fun PlanCards(plans: List<Plan>, selected: Plan?, doneOf: (Plan) -> Int, onSelect: (Long) -> Unit, onNew: () -> Unit) {
+    val shape = RoundedCornerShape(20.dp)
+    val card = Modifier.width(148.dp).heightIn(min = 96.dp)
+    LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        items(plans, key = { it.id }) { p ->
+            val on = p.id == selected?.id
+            val n = p.exercises.size
+            val done = doneOf(p)
+            val frac by animateFloatAsState(if (n == 0) 0f else done.toFloat() / n, tween(300), label = "progress")
+            Column(
+                card.clip(shape).background(if (on) Accent.copy(alpha = 0.12f) else Glass)
+                    .border(if (on) 1.5.dp else 1.dp, if (on) Accent else GlassBorder, shape)
+                    .selectable(on, role = Role.Tab) { onSelect(p.id) }.padding(14.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(p.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                    color = if (on) Ink else Ink.copy(alpha = 0.85f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Column {
+                    Box(Modifier.fillMaxWidth().height(4.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.08f))) {
+                        Box(Modifier.fillMaxWidth(frac).fillMaxHeight().clip(CircleShape).background(Accent))
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        if (n == 0) stringResource(R.string.no_exercises) else stringResource(R.string.today_progress, done, n),
+                        color = if (n > 0 && done == n) Accent else Muted, style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+        }
+        item {
+            val dash = Muted.copy(alpha = 0.45f)
+            Column(
+                card.clip(shape).drawBehind {
+                    drawRoundRect(dash, cornerRadius = CornerRadius(20.dp.toPx()),
+                        style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx()))))
+                }.clickable(onClick = onNew).padding(14.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Icon(Icons.Default.Add, null, tint = Accent)
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.new_plan), color = Muted, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+}
+
 // ---------- Building blocks ----------
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -566,28 +611,6 @@ fun CircleButton(icon: ImageVector, desc: String, onClick: () -> Unit) = Box(
     Modifier.size(48.dp).clip(CircleShape).background(Glass).border(1.dp, GlassBorder, CircleShape).clickable(onClick = onClick),
     contentAlignment = Alignment.Center,
 ) { Icon(icon, desc, Modifier.size(20.dp), tint = Ink) }
-
-@Composable
-fun Chip(title: String?, sub: String, selected: Boolean, icon: ImageVector? = null, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(18.dp)
-    Column(
-        Modifier.widthIn(min = 72.dp).clip(shape)
-            .background(if (selected) Brush.linearGradient(listOf(Accent, AccentDeep)) else SolidColor(Glass))
-            .border(1.dp, if (selected) Color.Transparent else GlassBorder, shape)
-            .selectable(selected, role = Role.Tab, onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        val ink = if (selected) OnAccent else Ink
-        val titleStyle = MaterialTheme.typography.titleMedium
-        // An icon takes the title's line height so icon and text chips stay the same height.
-        if (icon != null) Box(Modifier.height(with(LocalDensity.current) { titleStyle.lineHeight.toDp() }), contentAlignment = Alignment.Center) {
-            Icon(icon, null, Modifier.size(20.dp), tint = ink)
-        }
-        if (title != null) Text(title, color = ink, fontWeight = FontWeight.SemiBold, style = titleStyle)
-        Text(sub, color = if (selected) OnAccent.copy(alpha = 0.7f) else Muted, style = MaterialTheme.typography.labelSmall)
-    }
-}
 
 @Composable
 fun Pill(text: String) = Text(

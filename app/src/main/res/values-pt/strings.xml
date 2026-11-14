@@ -11,13 +11,9 @@
 
     <!-- Plans -->
     <string name="title_training">Treino</string>
-    <plurals name="exercises_count">
-        <item quantity="one">%d exercício</item>
-        <item quantity="many">%d exercícios</item>
-        <item quantity="other">%d exercícios</item>
-    </plurals>
     <string name="new_plan">Novo treino</string>
     <string name="no_exercises">Nenhum exercício</string>
+    <string name="today_progress">%1$d/%2$d hoje</string>
     <string name="plan_name_hint">Nome (ex.: Treino A – Pernas)</string>
     <string name="rename_plan">Renomear treino</string>
     <string name="delete_plan">Excluir treino</string>

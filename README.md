@@ -20,8 +20,9 @@ everything.
 
 **Plans & exercises**
 
-- Create several training plans (e.g. "Day A", "Day B") and switch between them with chips at the
-  top of the home screen; rename or delete a plan.
+- Create several training plans (e.g. "Day A", "Day B") and switch between them with cards at the
+  top of the home screen; each card shows today's progress (`done / total`). Rename or delete a
+  plan.
 - Strength exercises store sets, reps (free text, so `8-12` works), weight in kg, seat adjustment
   and other adjustments / notes.
 - Cardio exercises (treadmill, bike, …) store duration in minutes, speed / incline / level, seat
