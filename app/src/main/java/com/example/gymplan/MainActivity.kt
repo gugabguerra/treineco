@@ -37,6 +37,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -76,6 +81,25 @@ val GlassBorder = Color.White.copy(alpha = 0.09f)
 val Muted = Color(0xFF8D96B3)
 val Ink = Color(0xFFE9EDF8)
 
+// Oxanium variable font (res/font/oxanium.ttf, OFL — docs/licenses/Oxanium-OFL.txt), one instance per weight.
+@OptIn(ExperimentalTextApi::class)
+val Oxanium = FontFamily(
+    listOf(FontWeight.Light, FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold).map {
+        Font(R.font.oxanium, it, variationSettings = FontVariation.Settings(FontVariation.weight(it.weight)))
+    }
+)
+
+private val AppTypography = Typography().run {
+    fun TextStyle.ox() = copy(fontFamily = Oxanium)
+    Typography(
+        displayLarge.ox(), displayMedium.ox(), displaySmall.ox(),
+        headlineLarge.ox(), headlineMedium.ox(), headlineSmall.ox(),
+        titleLarge.ox(), titleMedium.ox(), titleSmall.ox(),
+        bodyLarge.ox(), bodyMedium.ox(), bodySmall.ox(),
+        labelLarge.ox(), labelMedium.ox(), labelSmall.ox(),
+    )
+}
+
 @Composable
 fun AppTheme(content: @Composable () -> Unit) = MaterialTheme(
     colorScheme = darkColorScheme(
@@ -86,6 +110,7 @@ fun AppTheme(content: @Composable () -> Unit) = MaterialTheme(
         onSurface = Ink, onSurfaceVariant = Muted,
         outline = Color.White.copy(alpha = 0.2f), outlineVariant = GlassBorder,
     ),
+    typography = AppTypography,
     content = content,
 )
 
@@ -169,10 +194,16 @@ fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (L
                 Text("Exercises", style = MaterialTheme.typography.titleMedium)
                 val doneCount = plan.exercises.count { store.data.isDone(it.id) }
                 Text(
-                    "  $doneCount/${plan.exercises.size} done today", Modifier.weight(1f),
+                    "  $doneCount/${plan.exercises.size} done", Modifier.weight(1f),
                     color = if (doneCount > 0 && doneCount == plan.exercises.size) Accent else Muted,
                     style = MaterialTheme.typography.labelLarge,
                 )
+                if (doneCount > 0) {
+                    TextButton({ store.update { d -> d.clearDone(plan.exercises.map { it.id }) } }) {
+                        Icon(Icons.Default.Refresh, null, Modifier.size(18.dp))
+                        Text(" Clear", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
                 IconButton({ onDialog("rename") }) { Icon(Icons.Default.Edit, "Rename plan", tint = Muted) }
                 IconButton({ onDialog("deletePlan") }) { Icon(Icons.Default.Delete, "Delete plan", tint = Muted) }
             }
@@ -412,24 +443,19 @@ fun Empty(text: String) = Text(
 
 @Composable
 fun BottomBar(tab: Int, onTab: (Int) -> Unit, modifier: Modifier, onAdd: () -> Unit) = Row(
-    modifier.navigationBarsPadding().padding(bottom = 16.dp),
+    modifier.navigationBarsPadding().padding(bottom = 16.dp)
+        .shadow(20.dp, CircleShape).clip(CircleShape).background(Color(0xFF131B3A))
+        .border(1.dp, GlassBorder, CircleShape).padding(8.dp),
     verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(14.dp),
+    horizontalArrangement = Arrangement.spacedBy(4.dp),
 ) {
-    Row(
-        Modifier.shadow(20.dp, CircleShape).clip(CircleShape).background(Color(0xFF131B3A))
-            .border(1.dp, GlassBorder, CircleShape).padding(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        NavItem(Icons.Default.Home, "Plans", tab == 0) { onTab(0) }
-        NavItem(Icons.Default.Person, "Body", tab == 1) { onTab(1) }
-    }
+    NavItem(Icons.Default.Home, "Plans", tab == 0) { onTab(0) }
+    NavItem(Icons.Default.Person, "Body", tab == 1) { onTab(1) }
+    Box(Modifier.padding(horizontal = 6.dp).width(1.dp).height(28.dp).background(GlassBorder))
     Box(
-        Modifier.size(64.dp).shadow(18.dp, CircleShape, ambientColor = Accent, spotColor = Accent).clip(CircleShape)
-            .background(Brush.radialGradient(listOf(Color(0xFFC2E4FF), Accent, AccentDeep)))
-            .clickable(onClick = onAdd),
+        Modifier.size(48.dp).clip(CircleShape).background(Accent).clickable(onClick = onAdd),
         contentAlignment = Alignment.Center,
-    ) { Icon(Icons.Default.Add, "Add", Modifier.size(28.dp), tint = OnAccent) }
+    ) { Icon(Icons.Default.Add, "Add", Modifier.size(24.dp), tint = OnAccent) }
 }
 
 @Composable

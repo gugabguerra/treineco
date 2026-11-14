@@ -15,3 +15,10 @@ file.
   chart and history.
 - Body-weight log with chart and history.
 - Dark theme with `#7BC4FF` accents, glass cards and floating bottom bar.
+- *Clear* button to reset a plan's completed checks.
+- Oxanium typeface throughout the app.
+
+### Changed
+
+- The add button now sits inside the bottom bar as a flat accent circle instead of a separate
+  glowing button.

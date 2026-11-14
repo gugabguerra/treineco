@@ -31,7 +31,8 @@ everything.
 **Workout**
 
 - Tick an exercise off with the circle on its card or the *Mark complete* button; the plan shows
-  `done / total` for today. Ticks reset automatically the next day.
+  `done / total` for today. Ticks reset automatically the next day, or tap *Clear* to reset the
+  plan's ticks right away.
 
 **Progress**
 
@@ -42,7 +43,8 @@ everything.
 
 **App**
 
-- Dark theme with `#7BC4FF` accents, glass-style cards and a floating bottom bar.
+- Dark theme with `#7BC4FF` accents, glass-style cards, the Oxanium typeface, and a floating
+  bottom bar with the add button built in.
 - Android 8.0 (API 26) or newer.
 
 ## 1. Run it
@@ -93,4 +95,5 @@ See [docs/CHANGELOG.md](docs/CHANGELOG.md); the current version lives in `VERSIO
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). The bundled Oxanium font is licensed under the SIL Open Font
+License 1.1 ([docs/licenses/Oxanium-OFL.txt](docs/licenses/Oxanium-OFL.txt)).

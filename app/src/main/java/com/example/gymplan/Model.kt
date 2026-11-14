@@ -45,6 +45,8 @@ fun Data.isDone(exId: Long, day: Long = today()) = done[exId] == day
 fun Data.toggleDone(exId: Long, day: Long = today()) =
     copy(done = if (isDone(exId, day)) done - exId else done + (exId to day))
 
+fun Data.clearDone(exIds: Collection<Long>) = copy(done = done - exIds.toSet())
+
 fun Data.upsertPlan(p: Plan) = copy(
     plans = if (plans.any { it.id == p.id }) plans.map { if (it.id == p.id) p else it } else plans + p
 )

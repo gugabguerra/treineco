@@ -24,6 +24,7 @@ class ModelTest {
         assertEquals(false, d.isDone(1, day = 6))           // next day starts unchecked
         assertEquals(false, d.toggleDone(1, day = 5).isDone(1, day = 5))
         assertEquals(emptyMap<Long, Long>(), d.deleteExercise(10, 1).done)
+        assertEquals(false, d.clearDone(listOf(1L)).isDone(1, day = 5))
     }
 
     @Test
