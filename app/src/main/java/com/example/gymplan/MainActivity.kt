@@ -10,6 +10,10 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -25,6 +29,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -52,6 +58,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -176,10 +185,13 @@ fun App(store: Store) {
 fun HomeScreen(store: Store, tab: Int, plan: Plan?, onTab: (Int) -> Unit, onSelectPlan: (Long) -> Unit, onOpen: (Long) -> Unit) {
     var dialog by remember { mutableStateOf<String?>(null) }
     Box(Modifier.fillMaxSize()) {
-        when (tab) {
-            0 -> PlansTab(store, plan, onSelectPlan, onOpen, onDialog = { dialog = it })
-            1 -> BodyTab(store)
-            else -> SettingsTab()
+        // Material fade-through between top-level destinations.
+        Crossfade(tab, animationSpec = tween(180), label = "tab") { t ->
+            when (t) {
+                0 -> PlansTab(store, plan, onSelectPlan, onOpen, onDialog = { dialog = it })
+                1 -> BodyTab(store)
+                else -> SettingsTab()
+            }
         }
         BottomBar(tab, onTab, Modifier.align(Alignment.BottomCenter), onAdd = if (tab == 2) null else {
             { dialog = when { tab == 1 -> "body"; plan == null -> "plan"; else -> "exercise" } }
@@ -243,11 +255,12 @@ fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (L
         item {
             LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(plans, key = { it.id }) { p ->
-                    Chip(p.name, pluralStringResource(R.plurals.exercises_count, p.exercises.size, p.exercises.size), p.id == plan?.id) {
-                        onSelectPlan(p.id)
-                    }
+                    val n = p.exercises.size
+                    val sub = if (n == 0) stringResource(R.string.no_exercises)
+                        else pluralStringResource(R.plurals.exercises_count, n, n)
+                    Chip(p.name, sub, p.id == plan?.id) { onSelectPlan(p.id) }
                 }
-                item { Chip("+", stringResource(R.string.new_plan), false) { onDialog("plan") } }
+                item { Chip(null, stringResource(R.string.new_plan), false, icon = Icons.Default.Add) { onDialog("plan") } }
             }
         }
         if (plan == null) {
@@ -259,14 +272,17 @@ fun PlansTab(store: Store, plan: Plan?, onSelectPlan: (Long) -> Unit, onOpen: (L
                 Text(stringResource(R.string.exercises), style = MaterialTheme.typography.titleMedium)
                 val doneCount = plan.exercises.count { store.data.isDone(it.id) }
                 Text(
-                    "  " + stringResource(R.string.done_count, doneCount, plan.exercises.size), Modifier.weight(1f),
+                    // An empty plan has nothing to count: "0/0 done" is noise.
+                    if (plan.exercises.isEmpty()) "" else stringResource(R.string.done_count, doneCount, plan.exercises.size),
+                    Modifier.weight(1f).padding(start = 8.dp),
                     color = if (doneCount > 0 && doneCount == plan.exercises.size) Accent else Muted,
                     style = MaterialTheme.typography.labelLarge,
                 )
                 if (doneCount > 0) {
                     TextButton({ store.update { d -> d.clearDone(plan.exercises.map { it.id }) } }) {
                         Icon(Icons.Default.Refresh, null, Modifier.size(18.dp))
-                        Text(" " + stringResource(R.string.clear), style = MaterialTheme.typography.labelLarge)
+                        Spacer(Modifier.width(6.dp))
+                        Text(stringResource(R.string.clear), style = MaterialTheme.typography.labelLarge)
                     }
                 }
                 IconButton({ onDialog("rename") }) { Icon(Icons.Default.Edit, stringResource(R.string.rename_plan), tint = Muted) }
@@ -330,7 +346,8 @@ fun ExerciseCard(
     onToggle: () -> Unit, onLongClick: () -> Unit, onClick: () -> Unit,
 ) = GlassCard(
     modifier.padding(horizontal = 20.dp).fillMaxWidth().alpha(if (done) 0.6f else 1f),
-    onClick = onClick, onLongClick = onLongClick, padding = PaddingValues(start = 4.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
+    // End padding is 8dp: the check's 48dp touch area puts its visible ring 16dp from the edge.
+    onClick = onClick, onLongClick = onLongClick, padding = PaddingValues(start = 4.dp, top = 16.dp, end = 8.dp, bottom = 16.dp),
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Box(handle.size(width = 36.dp, height = 48.dp), contentAlignment = Alignment.Center) {
@@ -351,7 +368,7 @@ fun ExerciseCard(
             Text(fmt(e.tracked), style = MaterialTheme.typography.titleLarge, color = Accent, fontWeight = FontWeight.Bold)
             Text(e.unit, style = MaterialTheme.typography.labelSmall, color = Muted)
         }
-        CheckCircle(done, onToggle)
+        CheckCircle(done, e.name, onToggle)
     }
 }
 
@@ -397,10 +414,14 @@ fun SettingsTab() {
         item { SectionLabel(stringResource(R.string.language)) }
         item {
             GlassCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth(), padding = PaddingValues(vertical = 4.dp)) {
-                listOf("" to stringResource(R.string.lang_system), "en" to "English", "pt" to "Português").forEachIndexed { i, (tag, label) ->
+                listOf(
+                    "" to stringResource(R.string.lang_system),
+                    "en" to stringResource(R.string.lang_en),
+                    "pt" to stringResource(R.string.lang_pt),
+                ).forEachIndexed { i, (tag, label) ->
                     if (i > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = GlassBorder)
                     Row(
-                        Modifier.fillMaxWidth().clickable {
+                        Modifier.fillMaxWidth().selectable(tag == current, role = Role.RadioButton) {
                             if (tag != current) {
                                 Lang.set(ctx, tag)
                                 (ctx as? Activity)?.recreate()
@@ -473,6 +494,8 @@ fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, onBack: () -> Unit) {
             val shape = RoundedCornerShape(16.dp)
             val toggle = { store.update { it.toggleDone(ex.id) } }
             if (done) OutlinedButton(toggle, mod, shape = shape) {
+                Icon(Icons.Default.Check, null, Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.completed_undo), fontWeight = FontWeight.SemiBold)
             }
             else Button(toggle, mod, shape = shape) { Text(stringResource(R.string.mark_complete), fontWeight = FontWeight.SemiBold) }
@@ -540,22 +563,28 @@ fun SectionLabel(text: String) = Text(
 
 @Composable
 fun CircleButton(icon: ImageVector, desc: String, onClick: () -> Unit) = Box(
-    Modifier.size(44.dp).clip(CircleShape).background(Glass).border(1.dp, GlassBorder, CircleShape).clickable(onClick = onClick),
+    Modifier.size(48.dp).clip(CircleShape).background(Glass).border(1.dp, GlassBorder, CircleShape).clickable(onClick = onClick),
     contentAlignment = Alignment.Center,
 ) { Icon(icon, desc, Modifier.size(20.dp), tint = Ink) }
 
 @Composable
-fun Chip(title: String, sub: String, selected: Boolean, onClick: () -> Unit) {
+fun Chip(title: String?, sub: String, selected: Boolean, icon: ImageVector? = null, onClick: () -> Unit) {
     val shape = RoundedCornerShape(18.dp)
     Column(
         Modifier.widthIn(min = 72.dp).clip(shape)
             .background(if (selected) Brush.linearGradient(listOf(Accent, AccentDeep)) else SolidColor(Glass))
             .border(1.dp, if (selected) Color.Transparent else GlassBorder, shape)
-            .clickable(onClick = onClick)
+            .selectable(selected, role = Role.Tab, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(title, color = if (selected) OnAccent else Ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+        val ink = if (selected) OnAccent else Ink
+        val titleStyle = MaterialTheme.typography.titleMedium
+        // An icon takes the title's line height so icon and text chips stay the same height.
+        if (icon != null) Box(Modifier.height(with(LocalDensity.current) { titleStyle.lineHeight.toDp() }), contentAlignment = Alignment.Center) {
+            Icon(icon, null, Modifier.size(20.dp), tint = ink)
+        }
+        if (title != null) Text(title, color = ink, fontWeight = FontWeight.SemiBold, style = titleStyle)
         Text(sub, color = if (selected) OnAccent.copy(alpha = 0.7f) else Muted, style = MaterialTheme.typography.labelSmall)
     }
 }
@@ -568,13 +597,20 @@ fun Pill(text: String) = Text(
 )
 
 @Composable
-fun CheckCircle(done: Boolean, onToggle: () -> Unit) = Box(
-    Modifier.size(32.dp).clip(CircleShape)
-        .background(if (done) Accent else Color.Transparent)
-        .border(2.dp, if (done) Accent else Muted.copy(alpha = 0.6f), CircleShape)
-        .clickable(onClickLabel = stringResource(if (done) R.string.mark_not_done else R.string.mark_done), onClick = onToggle),
+fun CheckCircle(done: Boolean, label: String, onToggle: () -> Unit) = Box(
+    // 48dp touch target around a 32dp ring; read as a checkbox named after the exercise.
+    Modifier.size(48.dp).clip(CircleShape)
+        .toggleable(done, role = Role.Checkbox, onValueChange = { onToggle() })
+        .semantics { contentDescription = label },
     contentAlignment = Alignment.Center,
-) { if (done) Icon(Icons.Default.Check, null, Modifier.size(20.dp), tint = OnAccent) }
+) {
+    val fill by animateColorAsState(if (done) Accent else Color.Transparent, tween(150), label = "check")
+    Box(
+        Modifier.size(32.dp).clip(CircleShape).background(fill)
+            .border(2.dp, if (done) Accent else Muted.copy(alpha = 0.6f), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) { if (done) Icon(Icons.Default.Check, null, Modifier.size(20.dp), tint = OnAccent) }
+}
 
 @Composable
 fun BigWeight(w: Double, unit: String = "kg") = Row(verticalAlignment = Alignment.Bottom) {
@@ -610,7 +646,9 @@ fun Empty(text: String) = Text(
 fun BottomBar(tab: Int, onTab: (Int) -> Unit, modifier: Modifier, onAdd: (() -> Unit)?) = Row(
     modifier.navigationBarsPadding().padding(bottom = 16.dp)
         .shadow(20.dp, CircleShape).clip(CircleShape).background(Color(0xFF131B3A))
-        .border(1.dp, GlassBorder, CircleShape).padding(8.dp),
+        .border(1.dp, GlassBorder, CircleShape)
+        .animateContentSize(tween(200)) // the bar resizes as labels and the add button come and go
+        .padding(8.dp),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(4.dp),
 ) {
@@ -629,12 +667,13 @@ fun BottomBar(tab: Int, onTab: (Int) -> Unit, modifier: Modifier, onAdd: (() -> 
 @Composable
 fun NavItem(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) = Row(
     Modifier.clip(CircleShape).background(if (selected) Accent.copy(alpha = 0.15f) else Color.Transparent)
-        .clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        .selectable(selected, role = Role.Tab, onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
 ) {
-    Icon(icon, label, tint = if (selected) Accent else Muted)
-    if (selected) Text(label, color = Accent, style = MaterialTheme.typography.labelLarge)
+    // Selected tab shows its label, so the icon needs no description of its own there.
+    Icon(icon, if (selected) null else label, tint = if (selected) Accent else Muted)
+    if (selected) Text(label, color = Accent, style = MaterialTheme.typography.labelLarge, maxLines = 1)
 }
 
 @Composable
@@ -649,7 +688,8 @@ fun ChartCard(entries: List<WeightEntry>, unit: String = "kg") = GlassCard(Modif
     val max = sorted.maxOf { it.weight }
     val delta = sorted.last().weight - sorted.first().weight
     Text(
-        stringResource(R.string.delta_since, (if (delta >= 0) "+" else "") + fmt(delta), unit, fmtDate(sorted.first().date)),
+        // Typographic minus (U+2212), not a hyphen, to pair with the "+".
+        stringResource(R.string.delta_since, (if (delta >= 0) "+" else "−") + fmt(kotlin.math.abs(delta)), unit, fmtDate(sorted.first().date)),
         color = Muted, style = MaterialTheme.typography.bodyMedium,
     )
     Spacer(Modifier.height(12.dp))
@@ -744,7 +784,7 @@ fun Segmented(options: List<String>, selected: Int, onSelect: (Int) -> Unit) = R
     options.forEachIndexed { i, label ->
         Box(
             Modifier.weight(1f).clip(CircleShape).background(if (i == selected) Accent else Color.Transparent)
-                .clickable { onSelect(i) }.padding(vertical = 10.dp),
+                .selectable(i == selected, role = Role.RadioButton) { onSelect(i) }.padding(vertical = 10.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(label, color = if (i == selected) OnAccent else Muted, style = MaterialTheme.typography.labelLarge,

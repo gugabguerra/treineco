@@ -17,6 +17,7 @@
         <item quantity="other">%d exercícios</item>
     </plurals>
     <string name="new_plan">Novo treino</string>
+    <string name="no_exercises">Nenhum exercício</string>
     <string name="plan_name_hint">Nome (ex.: Treino A – Pernas)</string>
     <string name="rename_plan">Renomear treino</string>
     <string name="delete_plan">Excluir treino</string>
@@ -27,8 +28,6 @@
     <string name="clear">Limpar</string>
     <string name="empty_no_exercises">Nenhum exercício ainda. Toque em + para adicionar.</string>
     <string name="drag_to_reorder">Arraste para reordenar</string>
-    <string name="mark_done">Marcar como feito</string>
-    <string name="mark_not_done">Desmarcar</string>
     <string name="seat_value">Assento %s</string>
 
     <!-- Body -->
@@ -54,7 +53,7 @@
     <string name="reps_value">%s reps</string>
     <string name="seat">Assento</string>
     <string name="adjustments">Ajustes</string>
-    <string name="completed_undo">Feito hoje ✓ (desfazer)</string>
+    <string name="completed_undo">Feito hoje · desfazer</string>
     <string name="mark_complete">Marcar como feito</string>
     <string name="update_weight">Atualizar carga / ajustes</string>
     <string name="update_duration">Atualizar duração / ajustes</string>

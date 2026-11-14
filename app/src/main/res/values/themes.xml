@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window and launch background match the app's darkest gradient stop (Bg1 in
+         MainActivity.kt), so there is no grey flash before Compose draws. -->
+    <color name="window_bg">#060A18</color>
+    <style name="Theme.GymPlan" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_bg</item>
+        <item name="android:colorBackground">@color/window_bg</item>
+    </style>
+</resources>

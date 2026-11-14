@@ -28,3 +28,11 @@ file.
   Strength / Cardio segmented switch.
 - Plans tab icon is now a dumbbell; the letter circle on exercise cards is replaced by the drag
   handle.
+- UI polish: fade between tabs and a resizing bottom bar; empty plans read "No exercises" and
+  hide the `0/0 done` count; the new-plan chip and *Completed today* button use real icons.
+
+### Fixed
+
+- Grey window flash on launch; the window background now matches the app's dark theme.
+- Accessibility: exercise check circles and header buttons have 48dp touch targets; checks, tabs,
+  plan chips and language options are announced with their role and selected state.
