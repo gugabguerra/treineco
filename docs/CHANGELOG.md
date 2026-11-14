@@ -18,6 +18,8 @@ file.
 - *Clear* button to reset a plan's completed checks.
 - Oxanium typeface throughout the app.
 - Drag-to-reorder exercises with a handle on each card; long-press a card to delete it.
+- App icon: adaptive launcher icon (clipboard with a dumbbell) with a themed-icon layer for
+  Android 13+, plus a 512 px Play Store version.
 - Settings screen with an in-app language choice; Portuguese (Brazil) translation.
 
 ### Changed
