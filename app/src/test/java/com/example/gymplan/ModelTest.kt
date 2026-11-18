@@ -97,6 +97,54 @@ class ModelTest {
     }
 
     @Test
+    fun perSetRepsAndWeightsRoundTrip() {
+        val split = ex.copy(
+            sets = 3, reps = "12", weight = 70.0,
+            repsPerSet = listOf(12, 10, 8), weightsPerSet = listOf(70.0, 80.0, 75.0),
+        )
+        val d = Data().upsertPlan(Plan(10, "A")).upsertExercise(10, split, now = 100)
+        assertEquals(split, parseData(d.toJson()).plans[0].exercises[0])
+        assertEquals(80.0, split.tracked, 0.0)                     // heaviest set is tracked
+        assertEquals(ExerciseDefaults(3, "12", 80.0), d.defaults)
+    }
+
+    @Test
+    fun cardRepsHidesSingleSetCount() {
+        assertEquals("× 10", ex.copy(sets = 1, reps = "10").cardReps())
+        assertEquals("3 × 10", ex.copy(sets = 3, reps = "10", repsPerSet = listOf(10, 10, 10)).cardReps())
+        assertEquals("12 / 10 / 8", ex.copy(sets = 3, reps = "12", repsPerSet = listOf(12, 10, 8)).cardReps())
+    }
+
+    @Test
+    fun cardWeightsShowsVariationsAndTruncatesAboveFour() {
+        assertEquals(null, ex.copy(sets = 3, weightsPerSet = listOf(70.0, 70.0, 70.0)).cardWeights())
+        assertEquals("70 / 65 / 60", ex.copy(sets = 3, weightsPerSet = listOf(70.0, 65.0, 60.0)).cardWeights())
+        assertEquals("70 / 65 / 60 / 55", ex.copy(sets = 4, weightsPerSet = listOf(70.0, 65.0, 60.0, 55.0)).cardWeights())
+        assertEquals("70 / 65 / 60 / ...",
+            ex.copy(sets = 5, weightsPerSet = listOf(70.0, 65.0, 60.0, 55.0, 50.0)).cardWeights())
+    }
+
+    @Test
+    fun cloneExerciseToPlanAppendsFreshCopy() {
+        val d = Data().upsertPlan(Plan(10, "A", listOf(ex))).upsertPlan(Plan(11, "B"))
+        val out = d.cloneExerciseToPlan(10, ex.id, 11, now = 100, id = 99)
+        val src = out.plans.first { it.id == 10L }.exercises
+        val dst = out.plans.first { it.id == 11L }.exercises
+        assertEquals(listOf(ex), src)                              // source untouched
+        assertEquals(listOf(ex.copy(id = 99)), dst)                // appended, fresh id
+        assertEquals(listOf(WeightEntry(100, ex.tracked)), out.history[99L])
+    }
+
+    @Test
+    fun legacyExerciseWithoutBreakdownLoads() {
+        val json = """{"plans":[{"id":10,"name":"A","exercises":[{"id":1,"name":"Leg press","sets":4,"reps":"8-12","weight":80,"seat":"Seat 5","notes":""}]}]}"""
+        val e = parseData(json).plans[0].exercises[0]
+        assertEquals(emptyList<Int>(), e.repsPerSet)
+        assertEquals(emptyList<Double>(), e.weightsPerSet)
+        assertEquals(80.0, e.tracked, 0.0)
+    }
+
+    @Test
     fun jsonRoundTrip() {
         val d = Data()
             .upsertPlan(Plan(10, "A"))

@@ -26,6 +26,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -40,6 +41,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -76,9 +78,13 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
+import kotlin.math.abs
 import java.io.File
 import java.text.DateFormat
 import java.util.Date
@@ -168,6 +174,11 @@ fun AppTheme(content: @Composable () -> Unit) = MaterialTheme(
 fun fmt(d: Double) = if (d % 1.0 == 0.0) d.toLong().toString() else "%.1f".format(d)
 fun fmtDate(t: Long): String = DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(t))
 fun parseNum(s: String) = s.trim().replace(',', '.').toDoubleOrNull()
+
+/** Distinct values of a per-set breakdown, in order: 10, 10, 8 reads "10 / 8". */
+fun summary(values: List<String>) = values.distinct().joinToString(" / ")
+fun Exercise.repsSummary() = summary(if (repsPerSet.isEmpty()) listOf(reps) else repsPerSet.map { it.toString() })
+fun Exercise.weightsSummary() = summary(weightsPerSet.map(::fmt))
 
 // ---------- Navigation ----------
 
@@ -264,6 +275,8 @@ fun PlansTab(store: Store, plan: Plan?, now: Long, onSelectPlan: (Long) -> Unit,
     var menu by remember { mutableStateOf<Long?>(null) }
     var toDelete by remember { mutableStateOf<Exercise?>(null) }
     var toClone by remember { mutableStateOf<Exercise?>(null) }
+    var toEdit by remember { mutableStateOf<Exercise?>(null) }
+    var toMove by remember { mutableStateOf<Exercise?>(null) }
 
     // Drag-to-reorder: a local copy of the order follows the finger; it is saved once on release.
     var order by remember(plan?.id, plan?.exercises) { mutableStateOf(plan?.exercises.orEmpty()) }
@@ -353,8 +366,10 @@ fun PlansTab(store: Store, plan: Plan?, now: Long, onSelectPlan: (Long) -> Unit,
                 },
                 onClick = { onOpen(e.id) },
             ) {
-                AppMenu(menu == e.id, { menu = null }, listOf(
+                AppMenu(menu == e.id, { menu = null }, listOfNotNull(
+                    MenuAction(Icons.Default.Edit, stringResource(R.string.edit)) { toEdit = e },
                     MenuAction(ImageVector.vectorResource(R.drawable.ic_copy), stringResource(R.string.clone_exercise)) { toClone = e },
+                    if (plans.size > 1) MenuAction(Icons.Default.ArrowForward, stringResource(R.string.clone_to_plan)) { toMove = e } else null,
                     MenuAction(Icons.Default.Delete, stringResource(R.string.delete_exercise), destructive = true) { toDelete = e },
                 ))
             }
@@ -371,6 +386,21 @@ fun PlansTab(store: Store, plan: Plan?, now: Long, onSelectPlan: (Long) -> Unit,
             stringResource(R.string.copy_name, e.name), onDismiss = { toClone = null }) { name ->
             store.update { it.cloneExercise(plan!!.id, e.id, name) }
             toClone = null
+        }
+    }
+    toEdit?.let { e ->
+        ExerciseDialog(e, store.data.defaults, onDismiss = { toEdit = null }) { ex ->
+            store.update { it.upsertExercise(plan!!.id, ex) }
+            toEdit = null
+        }
+    }
+    toMove?.let { e ->
+        PlanPickerDialog(
+            stringResource(R.string.clone_to_plan), plans.filter { it.id != plan!!.id },
+            onDismiss = { toMove = null },
+        ) { target ->
+            store.update { it.cloneExerciseToPlan(plan!!.id, e.id, target.id) }
+            toMove = null
         }
     }
 }
@@ -394,15 +424,25 @@ fun ExerciseCard(
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 listOfNotNull(
-                    if (e.cardio) e.intensity.ifBlank { stringResource(R.string.cardio) } else "${e.sets} × ${e.reps}",
+                    if (e.cardio) e.intensity.ifBlank { stringResource(R.string.cardio) }
+                    else e.cardReps(),
                     e.seat.takeIf { !e.cardio && it.isNotBlank() }?.let { stringResource(R.string.seat_value, it) },
                 ).joinToString("  ·  "),
                 style = MaterialTheme.typography.bodyMedium, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(fmt(e.tracked), style = MaterialTheme.typography.titleLarge, color = Accent, fontWeight = FontWeight.Bold)
-            Text(e.unit, style = MaterialTheme.typography.labelSmall, color = Muted)
+        // A bodyweight exercise has no load to show: omit the 0 kg column instead.
+        if (e.cardio || e.tracked > 0.0) {
+            Column(horizontalAlignment = Alignment.End) {
+                val varied = if (e.cardio) null else e.cardWeights()
+                if (varied != null) {
+                    Text(varied, style = MaterialTheme.typography.titleMedium, color = Accent, fontWeight = FontWeight.Bold,
+                        maxLines = 1)
+                } else {
+                    Text(fmt(e.tracked), style = MaterialTheme.typography.titleLarge, color = Accent, fontWeight = FontWeight.Bold)
+                }
+                Text(e.unit, style = MaterialTheme.typography.labelSmall, color = Muted)
+            }
         }
         CheckCircle(done, e.name, onToggle)
     }
@@ -506,15 +546,21 @@ fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, now: Long, onBack: ()
         }
         item {
             GlassCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth()) {
-                Text(stringResource(if (ex.cardio) R.string.duration else R.string.working_weight), color = Muted,
-                    style = MaterialTheme.typography.labelLarge)
-                BigWeight(ex.tracked, ex.unit)
-                Spacer(Modifier.height(12.dp))
+                // A bodyweight exercise has no load to show: omit the 0 kg line instead.
+                if (ex.cardio || ex.tracked > 0.0) {
+                    Text(stringResource(if (ex.cardio) R.string.duration else R.string.working_weight), color = Muted,
+                        style = MaterialTheme.typography.labelLarge)
+                    BigWeight(ex.tracked, ex.unit)
+                    Spacer(Modifier.height(12.dp))
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (ex.cardio) Pill(ex.intensity.ifBlank { stringResource(R.string.cardio) })
                     else {
                         Pill(pluralStringResource(R.plurals.sets_count, ex.sets, ex.sets))
-                        Pill(stringResource(R.string.reps_value, ex.reps))
+                        Pill(stringResource(R.string.reps_value, ex.repsSummary()))
+                        if (ex.tracked > 0.0 && ex.weightsPerSet.distinct().size > 1) {
+                            Pill(stringResource(R.string.weight_value, ex.weightsSummary()))
+                        }
                     }
                 }
             }
@@ -658,6 +704,34 @@ fun Header(title: String, onBack: (() -> Unit)? = null, actions: @Composable Row
         fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis,
     )
     actions()
+}
+
+/** Lists the other plans; tapping one hands it to [onPick]. */
+@Composable
+fun PlanPickerDialog(title: String, plans: List<Plan>, onDismiss: () -> Unit, onPick: (Plan) -> Unit) {
+    val shape = RoundedCornerShape(28.dp)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.border(1.dp, GlassBorder, shape),
+        shape = shape,
+        containerColor = DialogBg,
+        titleContentColor = Ink,
+        title = { Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                plans.forEach { p ->
+                    Text(
+                        p.name, style = MaterialTheme.typography.titleMedium, color = Ink,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                            .clickable { onPick(p) }.padding(horizontal = 12.dp, vertical = 14.dp),
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onDismiss) { Text(stringResource(R.string.cancel), color = Muted) } },
+    )
 }
 
 @Composable
@@ -867,11 +941,13 @@ fun AppDialog(
 fun Field(
     value: String, onChange: (String) -> Unit, label: String, modifier: Modifier = Modifier,
     keyboard: KeyboardType = KeyboardType.Text, singleLine: Boolean = true, minLines: Int = 1,
+    trailing: (@Composable () -> Unit)? = null,
 ) = OutlinedTextField(
     value, onChange, modifier.fillMaxWidth(),
     label = { Text(label) },
     singleLine = singleLine,
     minLines = minLines,
+    trailingIcon = trailing,
     shape = RoundedCornerShape(14.dp),
     keyboardOptions = KeyboardOptions(keyboardType = keyboard),
     colors = OutlinedTextFieldDefaults.colors(
@@ -894,6 +970,142 @@ fun Segmented(options: List<String>, selected: Int, onSelect: (Int) -> Unit) = R
             Text(label, color = if (i == selected) OnAccent else Muted, style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold)
         }
+    }
+}
+
+/**
+ * Vertical wheel picker: the number in the middle is selected, neighbours fade out. Scroll or
+ * fling the wheel; tapping a row scrolls it to the middle.
+ */
+@Composable
+fun NumberWheel(
+    value: Int, range: IntRange, onChange: (Int) -> Unit,
+    modifier: Modifier = Modifier, rows: Int = 5, itemHeight: Dp = 36.dp,
+) {
+    val values = range.toList()
+    val initial = (value - range.first).coerceIn(values.indices)
+    val state = rememberLazyListState(initialFirstVisibleItemIndex = initial)
+    val fling = rememberSnapFlingBehavior(lazyListState = state)
+    val scope = rememberCoroutineScope()
+    var current by remember { mutableIntStateOf(initial) }
+    var syncing by remember { mutableStateOf(false) }
+
+    // The item closest to the middle of the wheel is the selection.
+    LaunchedEffect(state) {
+        snapshotFlow {
+            val info = state.layoutInfo
+            val middle = (info.viewportStartOffset + info.viewportEndOffset) / 2f
+            info.visibleItemsInfo.minByOrNull { abs(it.offset + it.size / 2f - middle) }?.index
+        }.distinctUntilChanged().collect { i ->
+            if (!syncing && i != null && i != current && i in values.indices) {
+                current = i
+                onChange(range.first + i)
+            }
+        }
+    }
+    // Follow values changed from outside (e.g. the common Reps wheel resetting every set).
+    LaunchedEffect(value) {
+        val target = (value - range.first).coerceIn(values.indices)
+        if (target != current) {
+            syncing = true
+            current = target
+            state.animateScrollToItem(target)
+            syncing = false
+        }
+    }
+
+    LazyColumn(
+        state = state,
+        flingBehavior = fling,
+        modifier = modifier.height(itemHeight * rows),
+        contentPadding = PaddingValues(vertical = itemHeight * (rows / 2)),
+    ) {
+        items(values.size, key = { values[it] }) { i ->
+            val distance = abs(i - current)
+            val alpha by animateFloatAsState(
+                when (distance) { 0 -> 1f; 1 -> 0.5f; else -> 0.2f }, tween(140), label = "wheelAlpha",
+            )
+            val scale by animateFloatAsState(if (distance == 0) 1.2f else 1f, tween(140), label = "wheelScale")
+            Box(
+                Modifier.fillMaxWidth().height(itemHeight)
+                    .clickable { scope.launch { state.animateScrollToItem(i) } }
+                    .semantics { selected = distance == 0 },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    values[i].toString(),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = if (distance == 0) FontWeight.SemiBold else FontWeight.Normal,
+                    color = Ink,
+                    modifier = Modifier.graphicsLayer {
+                        this.alpha = alpha
+                        scaleX = scale
+                        scaleY = scale
+                    },
+                )
+            }
+        }
+    }
+}
+
+/** Bordered field with a label, current value and vertical wheel; [action] sits inside it. */
+@Composable
+fun WheelField(
+    label: String, value: Int, range: IntRange, onChange: (Int) -> Unit,
+    modifier: Modifier = Modifier, action: (@Composable () -> Unit)? = null,
+) = Column(
+    modifier.clip(RoundedCornerShape(14.dp)).background(Glass)
+        .border(1.dp, GlassBorder, RoundedCornerShape(14.dp))
+        .padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+) {
+    Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.weight(1f), color = Muted, style = MaterialTheme.typography.labelLarge)
+        Text("$value", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        if (action != null) action() else Spacer(Modifier.width(14.dp))
+    }
+    NumberWheel(value, range, onChange, Modifier.fillMaxWidth(), rows = 3, itemHeight = 32.dp)
+}
+
+/** Per-set wheel in a card: set label above three visible numbers. */
+@Composable
+fun SetWheel(label: String, value: Int, range: IntRange, onChange: (Int) -> Unit, modifier: Modifier = Modifier) = Column(
+    modifier.clip(RoundedCornerShape(14.dp)).background(Glass)
+        .border(1.dp, GlassBorder, RoundedCornerShape(14.dp)).padding(top = 6.dp, bottom = 6.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+) {
+    Text(label, color = Muted, style = MaterialTheme.typography.labelSmall)
+    NumberWheel(value, range, onChange, Modifier.fillMaxWidth(), rows = 3, itemHeight = 32.dp)
+}
+
+/** Lays out one cell per set in a fixed 4-column grid, so rows line up even when the last is short. */
+@Composable
+fun PerSetGrid(count: Int, cell: @Composable (Modifier, Int) -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    (0 until count).chunked(4).forEach { row ->
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            repeat(4) { c ->
+                val i = row.getOrNull(c)
+                if (i != null) cell(Modifier.weight(1f), i) else Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+/** Round button that opens or closes a per-set breakdown; announced as a switch. */
+@Composable
+fun BreakdownToggle(active: Boolean, description: String, onToggle: () -> Unit) = Box(
+    Modifier.size(48.dp).toggleable(active, role = Role.Switch) { onToggle() },
+    contentAlignment = Alignment.Center,
+) {
+    Box(
+        Modifier.size(34.dp).clip(CircleShape)
+            .background(if (active) Accent else Glass)
+            .border(1.dp, if (active) Accent else GlassBorder, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            Icons.AutoMirrored.Filled.List, description, Modifier.size(18.dp),
+            tint = if (active) OnAccent else Muted,
+        )
     }
 }
 
@@ -943,33 +1155,99 @@ fun SortPlansDialog(plans: List<Plan>, onDismiss: () -> Unit, onSave: (List<Long
     }
 }
 
+/** Compact per-set input: the set name sits above the field, so the field never has to float a label. */
+@Composable
+fun SetValueField(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) = Column(
+    modifier, horizontalAlignment = Alignment.Start,
+) {
+    Text(label, color = Muted, style = MaterialTheme.typography.labelSmall, maxLines = 1,
+        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
+    OutlinedTextField(
+        value, onChange, Modifier.fillMaxWidth(),
+        singleLine = true,
+        textStyle = MaterialTheme.typography.titleMedium.copy(color = Ink),
+        shape = RoundedCornerShape(14.dp),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Accent, unfocusedBorderColor = GlassBorder,
+            focusedContainerColor = Glass, unfocusedContainerColor = Glass, cursorColor = Accent,
+        ),
+    )
+}
+
+@Composable
+fun BreakdownLabel(text: String) = Text(
+    text, color = Muted, style = MaterialTheme.typography.labelLarge,
+    modifier = Modifier.padding(start = 4.dp, top = 4.dp),
+)
+
 /** New exercises start from [defaults]: the sets, reps and weight of the last one added. */
 @Composable
 fun ExerciseDialog(initial: Exercise?, defaults: ExerciseDefaults, onDismiss: () -> Unit, onSave: (Exercise) -> Unit) {
+    val setRange = 1..20
+    val repRange = 1..50
     var name by remember { mutableStateOf(initial?.name ?: "") }
-    var sets by remember { mutableStateOf((initial?.sets ?: defaults.sets).toString()) }
-    var reps by remember { mutableStateOf(initial?.reps ?: defaults.reps) }
+    var sets by remember { mutableStateOf((initial?.sets ?: defaults.sets).coerceIn(setRange)) }
+    var reps by remember {
+        mutableStateOf(((initial?.reps ?: defaults.reps).toIntOrNull() ?: 10).coerceIn(repRange))
+    }
     var weight by remember { mutableStateOf((initial?.weight ?: defaults.weight)?.let(::fmt) ?: "") }
     var seat by remember { mutableStateOf(initial?.seat ?: "") }
     var notes by remember { mutableStateOf(initial?.notes ?: "") }
     var cardio by remember { mutableStateOf(initial?.cardio ?: false) }
     var minutes by remember { mutableStateOf(initial?.minutes?.takeIf { it > 0 }?.toString() ?: "") }
     var intensity by remember { mutableStateOf(initial?.intensity ?: "") }
-    val setsN = sets.trim().toIntOrNull()
+
+    // Per-set breakdown, opened by the icon inside the Reps / Weight field.
+    var repsSplit by remember { mutableStateOf(initial != null && initial.sets > 1 && initial.repsPerSet.isNotEmpty()) }
+    var repsPerSet by remember { mutableStateOf(initial?.repsPerSet.orEmpty()) }
+    var weightsSplit by remember { mutableStateOf(initial != null && initial.sets > 1 && initial.weightsPerSet.isNotEmpty()) }
+    var weightsPerSet by remember { mutableStateOf(initial?.weightsPerSet.orEmpty().map(::fmt)) }
+
+    fun repAt(i: Int) = repsPerSet.getOrElse(i) { reps }
+    fun weightAt(i: Int) = weightsPerSet.getOrElse(i) { weight }
+    fun weightValueAt(i: Int) = weightAt(i).let { if (it.isBlank()) 0.0 else parseNum(it) }
+    fun resizeSets(n: Int) {
+        if (repsSplit) repsPerSet = List(n) { repAt(it) }
+        if (weightsSplit) weightsPerSet = List(n) { weightAt(it) }
+        if (n == 1) { // a single set has nothing to break down
+            repsSplit = false
+            weightsSplit = false
+        }
+        sets = n
+    }
+
     val weightN = if (weight.isBlank()) 0.0 else parseNum(weight)
     val minutesN = minutes.trim().toIntOrNull()
     val valid = name.isNotBlank() && if (cardio) minutesN != null && minutesN > 0
-        else setsN != null && setsN > 0 && weightN != null && weightN >= 0
+        else weightN != null && weightN >= 0 &&
+            (!weightsSplit || List(sets) { weightValueAt(it) }.all { it != null && it >= 0 })
+
+    val weightsAction: (@Composable () -> Unit)? = if (sets > 1) {
+        {
+            BreakdownToggle(weightsSplit, stringResource(R.string.weights_per_set)) {
+                if (!weightsSplit) weightsPerSet = List(sets) { weight }
+                weightsSplit = !weightsSplit
+            }
+        }
+    } else null
+
     AppDialog(
         stringResource(if (initial == null) R.string.new_exercise else R.string.edit_exercise),
         stringResource(R.string.save),
         onDismiss,
         onConfirm = {
+            val repValues = if (repsSplit) List(sets) { repAt(it) } else emptyList()
+            val weightValues = if (weightsSplit) List(sets) { weightValueAt(it) ?: 0.0 } else emptyList()
             onSave(
                 Exercise(
-                    initial?.id ?: newId(), name.trim(), setsN ?: 1, reps.trim(), weightN ?: 0.0,
+                    initial?.id ?: newId(), name.trim(), sets,
+                    (repValues.firstOrNull() ?: reps).toString(),
+                    if (weightValues.isNotEmpty()) weightValues.max() else weightN ?: 0.0,
                     if (cardio) "" else seat.trim(), notes.trim(),
                     cardio, minutesN ?: 0, intensity.trim(),
+                    repsPerSet = repValues,
+                    weightsPerSet = weightValues,
                 )
             )
         },
@@ -983,10 +1261,52 @@ fun ExerciseDialog(initial: Exercise?, defaults: ExerciseDefaults, onDismiss: ()
                 Field(intensity, { intensity = it }, stringResource(R.string.intensity))
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Field(sets, { sets = it }, stringResource(R.string.sets), Modifier.weight(1f), keyboard = KeyboardType.Number)
-                    Field(reps, { reps = it }, stringResource(R.string.reps), Modifier.weight(1f))
+                    WheelField(stringResource(R.string.sets), sets, setRange, ::resizeSets, Modifier.weight(1f))
+                    WheelField(
+                        stringResource(R.string.reps), reps, repRange,
+                        onChange = { v ->
+                            reps = v
+                            if (repsSplit) repsPerSet = List(sets) { v }
+                        },
+                        modifier = Modifier.weight(1f),
+                        action = if (sets > 1) {
+                            {
+                                BreakdownToggle(repsSplit, stringResource(R.string.reps_per_set)) {
+                                    if (!repsSplit) repsPerSet = List(sets) { reps }
+                                    repsSplit = !repsSplit
+                                }
+                            }
+                        } else null,
+                    )
                 }
-                Field(weight, { weight = it }, stringResource(R.string.weight_kg), keyboard = KeyboardType.Decimal)
+                if (repsSplit) {
+                    BreakdownLabel(stringResource(R.string.reps_per_set))
+                    PerSetGrid(sets) { m, i ->
+                        SetWheel(
+                            stringResource(R.string.set_number, i + 1), repAt(i), repRange,
+                            onChange = { v -> repsPerSet = List(sets) { j -> if (j == i) v else repAt(j) } },
+                            modifier = m,
+                        )
+                    }
+                }
+                Field(
+                    weight, { v ->
+                        weight = v
+                        if (weightsSplit) weightsPerSet = List(sets) { v }
+                    },
+                    stringResource(R.string.weight_kg), keyboard = KeyboardType.Decimal, trailing = weightsAction,
+                )
+                if (weightsSplit) {
+                    BreakdownLabel(stringResource(R.string.weights_per_set))
+                    PerSetGrid(sets) { m, i ->
+                        SetValueField(
+                            stringResource(R.string.set_number, i + 1),
+                            weightAt(i),
+                            { v -> weightsPerSet = List(sets) { j -> if (j == i) v else weightAt(j) } },
+                            modifier = m,
+                        )
+                    }
+                }
                 Field(seat, { seat = it }, stringResource(R.string.seat_adjustment))
             }
             Field(notes, { notes = it }, stringResource(R.string.other_adjustments), singleLine = false, minLines = 2)

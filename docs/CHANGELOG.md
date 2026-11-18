@@ -5,6 +5,21 @@ file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-18
+
+### Added
+
+- Per-set reps and weights: with more than one set, the icon inside the Reps or Weight field opens
+  a breakdown with one control per set.
+- Strength exercises with no weight (0 kg) show no weight on the training list and exercise screen.
+- Long-press an exercise to edit it, or clone it into another plan.
+
+### Changed
+
+- Sets and reps are picked by scrolling a vertical number wheel instead of typing into text fields.
+- Training list: a single set shows only its reps ("× 10"), varying reps show only the per-set
+  values ("12 / 10 / 8"), and varying weights show in a smaller font ("70 / 65 / 60 / ...").
+
 ## [0.2.0] - 2026-11-14
 
 ### Added

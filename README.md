@@ -28,13 +28,17 @@ Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no 
   top of the home screen; each card shows the current session's progress (`done / total`).
   Long-press a plan card to sort the plans, clone the plan (exercises included), rename or delete
   it.
-- Strength exercises store sets, reps (free text, so `8-12` works), weight in kg, seat adjustment
-  and other adjustments / notes.
+- Strength exercises store sets and reps picked with scrolling number wheels, weight in kg, seat
+  adjustment and other adjustments / notes.
+- With more than one set, tap the list icon inside the Reps or Weight field to set different reps
+  or a different weight per set.
+- The training list shows varying reps and weights per set (weights: at most three values, then
+  `...`); a single set shows only its reps.
 - Cardio exercises (treadmill, bike, …) store duration in minutes, speed / incline / level and
   notes.
 - A new exercise starts with the sets, reps and weight of the last strength exercise you added.
-- Drag the handle on the left of an exercise card to reorder the plan; long-press a card to clone
-  or delete the exercise. Clones start their own weight history.
+- Drag the handle on the left of an exercise card to reorder the plan; long-press a card to edit,
+  clone, clone to another plan or delete the exercise. Clones start their own weight history.
 - Decimal values accept both comma and dot (`42,5` or `42.5`).
 
 **Workout**
@@ -42,6 +46,7 @@ Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no 
 - Tick an exercise off with the circle on its card or the *Mark complete* button; the plan shows
   `done / total`. A plan's ticks clear automatically 24 h after its last tick, or tap *Clear* to
   reset them right away.
+- A strength exercise with no weight (0 kg) shows no weight on the training list or its screen.
 
 **Progress**
 

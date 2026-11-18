@@ -19,6 +19,7 @@
     <string name="delete_plan">Delete plan</string>
     <string name="sort_plans">Sort plans</string>
     <string name="clone_plan">Clone plan</string>
+    <string name="clone_to_plan">Clone to other plan</string>
     <string name="clone_exercise">Clone exercise</string>
     <string name="copy_name">%s (copy)</string>
     <string name="move_up">Move %s up</string>
@@ -52,6 +53,7 @@
         <item quantity="other">%d sets</item>
     </plurals>
     <string name="reps_value">%s reps</string>
+    <string name="weight_value">%s kg</string>
     <string name="seat">Seat</string>
     <string name="adjustments">Adjustments</string>
     <string name="completed_undo">Completed · undo</string>
@@ -71,6 +73,9 @@
     <string name="exercise_cardio_hint">Exercise (e.g. Treadmill)</string>
     <string name="sets">Sets</string>
     <string name="reps">Reps</string>
+    <string name="reps_per_set">Reps per set</string>
+    <string name="weights_per_set">Weights per set</string>
+    <string name="set_number">Set %d</string>
     <string name="duration_min">Duration (min)</string>
     <string name="intensity">Speed / incline / level</string>
     <string name="seat_adjustment">Seat adjustment</string>

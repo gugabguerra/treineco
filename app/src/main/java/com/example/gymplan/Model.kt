@@ -18,11 +18,28 @@ data class Exercise(
     val cardio: Boolean = false,
     val minutes: Int = 0,       // cardio duration
     val intensity: String = "", // cardio: speed / incline / level, free text
+    val repsPerSet: List<Int> = emptyList(),      // empty: every set uses [reps]
+    val weightsPerSet: List<Double> = emptyList(), // empty: every set uses [weight]
 )
 
-/** The number whose evolution we track: load for strength, duration for cardio. */
-val Exercise.tracked get() = if (cardio) minutes.toDouble() else weight
+/** The number whose evolution we track: the heaviest set, or duration for cardio. */
+val Exercise.tracked get() = if (cardio) minutes.toDouble() else weightsPerSet.maxOrNull() ?: weight
 val Exercise.unit get() = if (cardio) "min" else "kg"
+
+/** Training-list reps: "10" for one set, "× 10" when sets is 1, "3 × 10", or "12 / 10 / 8" when reps vary. */
+fun Exercise.cardReps(): String = when {
+    repsPerSet.distinct().size > 1 -> repsSummary()
+    sets == 1 -> "× ${repsSummary()}"
+    else -> "$sets × ${repsSummary()}"
+}
+
+/** Training-list weights when they vary: "70 / 65 / 60"; over four values, the first three and "...". */
+fun Exercise.cardWeights(): String? {
+    val values = weightsPerSet.distinct()
+    if (values.size <= 1) return null
+    val shown = values.map(::fmt)
+    return if (shown.size > 4) shown.take(3).joinToString(" / ") + " / ..." else shown.joinToString(" / ")
+}
 
 data class Plan(val id: Long, val name: String, val exercises: List<Exercise> = emptyList())
 
@@ -104,6 +121,19 @@ fun Data.cloneExercise(planId: Long, exId: Long, name: String, now: Long = Syste
         .copy(history = history + (id to listOf(WeightEntry(now, e.tracked))))
 }
 
+/**
+ * Copies the exercise to the end of another plan, under a fresh id; its history starts at its
+ * current value and ticks are not copied.
+ */
+fun Data.cloneExerciseToPlan(
+    fromPlanId: Long, exId: Long, toPlanId: Long, now: Long = System.currentTimeMillis(), id: Long = newId(),
+): Data {
+    val e = plans.first { it.id == fromPlanId }.exercises.first { it.id == exId }.copy(id = id)
+    val target = plans.first { it.id == toPlanId }
+    return upsertPlan(target.copy(exercises = target.exercises + e))
+        .copy(history = history + (id to listOf(WeightEntry(now, e.tracked))))
+}
+
 fun Data.clearDone(exIds: Collection<Long>) = copy(done = done - exIds.toSet())
 
 fun Data.upsertPlan(p: Plan) = copy(
@@ -122,7 +152,7 @@ fun Data.upsertExercise(planId: Long, e: Exercise, now: Long = System.currentTim
     val exs = if (old != null) plan.exercises.map { if (it.id == e.id) e else it } else plan.exercises + e
     val h = if (old?.tracked == e.tracked && old.cardio == e.cardio) history
     else history + (e.id to history[e.id].orEmpty() + WeightEntry(now, e.tracked))
-    val defs = if (old == null && !e.cardio) ExerciseDefaults(e.sets, e.reps, e.weight) else defaults
+    val defs = if (old == null && !e.cardio) ExerciseDefaults(e.sets, e.reps, e.tracked) else defaults
     return upsertPlan(plan.copy(exercises = exs)).copy(history = h, defaults = defs)
 }
 
@@ -147,6 +177,8 @@ fun Data.toJson(): String = JSONObject()
             JSONObject().put("id", e.id).put("name", e.name).put("sets", e.sets).put("reps", e.reps)
                 .put("weight", e.weight).put("seat", e.seat).put("notes", e.notes)
                 .put("cardio", e.cardio).put("minutes", e.minutes).put("intensity", e.intensity)
+                .put("repsPerSet", JSONArray(e.repsPerSet))
+                .put("weightsPerSet", JSONArray(e.weightsPerSet))
         }))
     }))
     .put("body", entriesJson(body))
@@ -168,6 +200,8 @@ fun parseData(s: String): Data {
                     e.getLong("id"), e.getString("name"), e.optInt("sets"), e.optString("reps"),
                     e.optDouble("weight", 0.0), e.optString("seat"), e.optString("notes"),
                     e.optBoolean("cardio"), e.optInt("minutes"), e.optString("intensity"),
+                    repsPerSet = e.optJSONArray("repsPerSet")?.let { a -> List(a.length()) { a.optInt(it) } }.orEmpty(),
+                    weightsPerSet = e.optJSONArray("weightsPerSet")?.let { a -> List(a.length()) { a.optDouble(it, 0.0) } }.orEmpty(),
                 )
             }.orEmpty())
         }.orEmpty(),

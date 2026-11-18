@@ -19,6 +19,7 @@
     <string name="delete_plan">Excluir treino</string>
     <string name="sort_plans">Ordenar planos</string>
     <string name="clone_plan">Clonar plano</string>
+    <string name="clone_to_plan">Clonar para outro treino</string>
     <string name="clone_exercise">Clonar exercício</string>
     <string name="copy_name">%s (cópia)</string>
     <string name="move_up">Mover %s para cima</string>
@@ -53,6 +54,7 @@
         <item quantity="other">%d séries</item>
     </plurals>
     <string name="reps_value">%s reps</string>
+    <string name="weight_value">%s kg</string>
     <string name="seat">Assento</string>
     <string name="adjustments">Ajustes</string>
     <string name="completed_undo">Feito · desfazer</string>
@@ -72,6 +74,9 @@
     <string name="exercise_cardio_hint">Exercício (ex.: Esteira)</string>
     <string name="sets">Séries</string>
     <string name="reps">Repetições</string>
+    <string name="reps_per_set">Repetições por série</string>
+    <string name="weights_per_set">Cargas por série</string>
+    <string name="set_number">Série %d</string>
     <string name="duration_min">Duração (min)</string>
     <string name="intensity">Velocidade / inclinação / nível</string>
     <string name="seat_adjustment">Ajuste do assento</string>
