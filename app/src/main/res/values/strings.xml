@@ -97,7 +97,10 @@
     <string name="lang_system">System default</string>
     <!-- Language names stay in their own language (endonyms). -->
     <string name="lang_en" translatable="false">English</string>
-    <string name="lang_pt" translatable="false">Português</string>
+    <string name="lang_es" translatable="false">Español</string>
+    <string name="lang_fr" translatable="false">Français</string>
+    <string name="lang_pt_pt" translatable="false">Português</string>
+    <string name="lang_pt_br" translatable="false">Português BR</string>
     <string name="data">Data</string>
     <string name="export_data">Export data</string>
     <string name="import_data">Import data</string>

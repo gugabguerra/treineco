@@ -123,7 +123,11 @@ class MainActivity : ComponentActivity() {
 /** In-app language: "" = follow the system, otherwise a BCP-47 tag ("en", "pt"). */
 object Lang {
     private fun prefs(c: Context) = c.getSharedPreferences("settings", Context.MODE_PRIVATE)
-    fun get(c: Context) = prefs(c).getString("lang", "") ?: ""
+    // "pt" was the only Portuguese option before PT-PT existed; it meant Brazilian Portuguese.
+    fun get(c: Context) = when (val tag = prefs(c).getString("lang", "") ?: "") {
+        "pt" -> "pt-BR"
+        else -> tag
+    }
     fun set(c: Context, tag: String) = prefs(c).edit().putString("lang", tag).apply()
 }
 
@@ -524,7 +528,10 @@ fun SettingsTab(store: Store) {
                 listOf(
                     "" to stringResource(R.string.lang_system),
                     "en" to stringResource(R.string.lang_en),
-                    "pt" to stringResource(R.string.lang_pt),
+                    "es" to stringResource(R.string.lang_es),
+                    "fr" to stringResource(R.string.lang_fr),
+                    "pt-PT" to stringResource(R.string.lang_pt_pt),
+                    "pt-BR" to stringResource(R.string.lang_pt_br),
                 ).forEachIndexed { i, (tag, label) ->
                     if (i > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = GlassBorder)
                     Row(

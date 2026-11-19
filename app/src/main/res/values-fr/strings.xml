@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gym Plan</string>
+
+    <!-- Navigation -->
+    <string name="nav_plans">Plans</string>
+    <string name="nav_body">Corps</string>
+    <string name="nav_settings">Réglages</string>
+    <string name="add">Ajouter</string>
+    <string name="back">Retour</string>
+
+    <!-- Plans -->
+    <string name="title_training">Entraînement</string>
+    <string name="new_plan">Nouveau plan</string>
+    <string name="no_exercises">Aucun exercice</string>
+    <string name="today_progress">%1$d/%2$d aujourd\'hui</string>
+    <string name="plan_name_hint">Nom (ex. Jour A – Jambes)</string>
+    <string name="rename_plan">Renommer le plan</string>
+    <string name="delete_plan">Supprimer le plan</string>
+    <string name="sort_plans">Trier les plans</string>
+    <string name="clone_plan">Dupliquer le plan</string>
+    <string name="clone_to_plan">Dupliquer dans un autre plan</string>
+    <string name="clone_exercise">Dupliquer l\'exercice</string>
+    <string name="copy_name">%s (copie)</string>
+    <string name="move_up">Monter %s</string>
+    <string name="move_down">Descendre %s</string>
+    <string name="confirm_delete_plan">\"%s\" et tous ses exercices et son historique seront supprimés.</string>
+    <string name="empty_no_plans">Créez votre premier plan pour commencer à ajouter des exercices.</string>
+    <string name="exercises">Exercices</string>
+    <string name="done_count">%1$d/%2$d faits</string>
+    <string name="clear">Réinitialiser</string>
+    <string name="empty_no_exercises">Aucun exercice pour l\'instant. Appuyez sur + pour en ajouter un.</string>
+    <string name="drag_to_reorder">Faites glisser pour réorganiser</string>
+    <string name="seat_value">Siège %s</string>
+
+    <!-- Corps -->
+    <string name="title_body">Corps</string>
+    <string name="empty_no_weighins">Aucune pesée pour l\'instant. Appuyez sur + pour noter votre poids.</string>
+    <string name="current_weight">Poids actuel</string>
+    <string name="last_weighin">Dernière pesée %s</string>
+    <string name="log_body_weight">Noter le poids</string>
+    <string name="weight_kg">Poids (kg)</string>
+    <string name="confirm_delete_entry">La pesée de %1$s kg du %2$s sera supprimée.</string>
+
+    <!-- Exercise -->
+    <string name="edit">Modifier</string>
+    <string name="delete_exercise">Supprimer l\'exercice</string>
+    <string name="confirm_delete_exercise">\"%s\" et son historique seront supprimés.</string>
+    <string name="duration">Durée</string>
+    <string name="working_weight">Charge actuelle</string>
+    <plurals name="sets_count">
+        <item quantity="one">%d série</item>
+        <item quantity="other">%d séries</item>
+    </plurals>
+    <string name="reps_value">%s reps</string>
+    <string name="weight_value">%s kg</string>
+    <string name="seat">Siège</string>
+    <string name="adjustments">Ajustements</string>
+    <string name="completed_undo">Terminé · annuler</string>
+    <string name="mark_complete">Marquer comme fait</string>
+    <string name="update_weight">Modifier la charge / réglages</string>
+    <string name="update_duration">Modifier la durée / réglages</string>
+    <string name="evolution">Évolution</string>
+    <string name="need_two_values">Notez au moins 2 valeurs pour voir le graphique.</string>
+    <string name="delta_since">%1$s %2$s depuis le %3$s</string>
+
+    <!-- Exercise dialog -->
+    <string name="new_exercise">Nouvel exercice</string>
+    <string name="edit_exercise">Modifier l\'exercice</string>
+    <string name="strength">Musculation</string>
+    <string name="cardio">Cardio</string>
+    <string name="exercise">Exercice</string>
+    <string name="exercise_cardio_hint">Exercice (ex. Tapis de course)</string>
+    <string name="sets">Séries</string>
+    <string name="reps">Répétitions</string>
+    <string name="weight">Charge</string>
+    <string name="reps_per_set">Répétitions par série</string>
+    <string name="weights_per_set">Charges par série</string>
+    <string name="select_for_each_set">à choisir pour chaque série</string>
+    <string name="set_number">Série %d</string>
+    <string name="duration_min">Durée (min)</string>
+    <string name="intensity">Vitesse / inclinaison / niveau</string>
+    <string name="seat_adjustment">Siège / réglage</string>
+    <string name="other_adjustments">Notes</string>
+
+    <!-- Dialogs -->
+    <string name="save">Enregistrer</string>
+    <string name="cancel">Annuler</string>
+    <string name="delete">Supprimer</string>
+    <string name="delete_question">Supprimer ?</string>
+    <string name="name">Nom</string>
+    <string name="ok">OK</string>
+
+    <!-- Settings -->
+    <string name="title_settings">Réglages</string>
+    <string name="language">Langue</string>
+    <string name="lang_system">Par défaut du système</string>
+    <string name="data">Données</string>
+    <string name="export_data">Exporter les données</string>
+    <string name="import_data">Importer les données</string>
+    <string name="export_title">Exporter</string>
+    <string name="export_done">Données exportées vers le fichier choisi.</string>
+    <string name="export_failed">Impossible d\'écrire le fichier. Essayez un autre emplacement.</string>
+    <string name="import_title">Importer</string>
+    <string name="import_invalid">Ce fichier n\'est pas une sauvegarde GymPlan.</string>
+    <string name="import_question">Importer les données ?</string>
+    <string name="import_action">Importer</string>
+    <string name="import_summary">La sauvegarde contient %1$d plans, %2$d exercices et %3$d pesées.</string>
+    <string name="import_warning">Toutes les données actuelles seront remplacées. Exportez-les d\'abord si vous voulez les garder.</string>
+    <string name="import_done">Données remplacées par la sauvegarde.</string>
+    <string name="about">À propos</string>
+    <string name="version">Version %s</string>
+    <string name="about_text">Planificateur d\'entraînement hors ligne. Vos données restent sur ce téléphone.</string>
+</resources>

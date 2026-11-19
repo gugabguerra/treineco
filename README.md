@@ -61,8 +61,9 @@ Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no 
 
 - Dark theme with `#7BC4FF` accents, glass-style cards, the Oxanium typeface, and a floating
   bottom bar with the add button built in.
-- Settings: choose the app language — system default, English or Portuguese (Brazil) — without
-  changing the phone's language. Numbers and dates follow the chosen language.
+- Settings: choose the app language — system default, English, Español, Français, Português
+  (Portugal) or Português BR (Brazil) — without changing the phone's language. Numbers and dates
+  follow the chosen language.
 - Settings: export all data to a JSON file or import a backup, choosing the file with Android's
   file picker. Import replaces everything that is stored and asks for confirmation first; exported
   files are plain JSON, not encrypted.

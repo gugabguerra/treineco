@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gym Plan</string>
+
+    <!-- Navegación -->
+    <string name="nav_plans">Planes</string>
+    <string name="nav_body">Cuerpo</string>
+    <string name="nav_settings">Ajustes</string>
+    <string name="add">Añadir</string>
+    <string name="back">Atrás</string>
+
+    <!-- Planes -->
+    <string name="title_training">Entrenamiento</string>
+    <string name="new_plan">Nuevo plan</string>
+    <string name="no_exercises">Sin ejercicios</string>
+    <string name="today_progress">%1$d/%2$d hoy</string>
+    <string name="plan_name_hint">Nombre (p. ej. Día A – Piernas)</string>
+    <string name="rename_plan">Renombrar plan</string>
+    <string name="delete_plan">Eliminar plan</string>
+    <string name="sort_plans">Ordenar planes</string>
+    <string name="clone_plan">Clonar plan</string>
+    <string name="clone_to_plan">Clonar a otro plan</string>
+    <string name="clone_exercise">Clonar ejercicio</string>
+    <string name="copy_name">%s (copia)</string>
+    <string name="move_up">Subir %s</string>
+    <string name="move_down">Bajar %s</string>
+    <string name="confirm_delete_plan">\"%s\" y todos sus ejercicios e historial se eliminarán.</string>
+    <string name="empty_no_plans">Crea tu primer plan para empezar a añadir ejercicios.</string>
+    <string name="exercises">Ejercicios</string>
+    <string name="done_count">%1$d/%2$d hechos</string>
+    <string name="clear">Reiniciar</string>
+    <string name="empty_no_exercises">Aún no hay ejercicios. Toca + para añadir uno.</string>
+    <string name="drag_to_reorder">Arrastra para reordenar</string>
+    <string name="seat_value">Asiento %s</string>
+
+    <!-- Cuerpo -->
+    <string name="title_body">Cuerpo</string>
+    <string name="empty_no_weighins">Aún no hay pesajes. Toca + para registrar tu peso.</string>
+    <string name="current_weight">Peso actual</string>
+    <string name="last_weighin">Último pesaje %s</string>
+    <string name="log_body_weight">Registrar peso corporal</string>
+    <string name="weight_kg">Peso (kg)</string>
+    <string name="confirm_delete_entry">El pesaje de %1$s kg del %2$s se eliminará.</string>
+
+    <!-- Ejercicio -->
+    <string name="edit">Editar</string>
+    <string name="delete_exercise">Eliminar ejercicio</string>
+    <string name="confirm_delete_exercise">\"%s\" y su historial se eliminarán.</string>
+    <string name="duration">Duración</string>
+    <string name="working_weight">Peso de trabajo</string>
+    <plurals name="sets_count">
+        <item quantity="one">%d serie</item>
+        <item quantity="other">%d series</item>
+    </plurals>
+    <string name="reps_value">%s reps</string>
+    <string name="weight_value">%s kg</string>
+    <string name="seat">Asiento</string>
+    <string name="adjustments">Ajustes</string>
+    <string name="completed_undo">Completado · deshacer</string>
+    <string name="mark_complete">Marcar como hecho</string>
+    <string name="update_weight">Actualizar peso / ajustes</string>
+    <string name="update_duration">Actualizar duración / ajustes</string>
+    <string name="evolution">Evolución</string>
+    <string name="need_two_values">Registra al menos 2 valores para ver el gráfico.</string>
+    <string name="delta_since">%1$s %2$s desde el %3$s</string>
+
+    <!-- Diálogo de ejercicio -->
+    <string name="new_exercise">Nuevo ejercicio</string>
+    <string name="edit_exercise">Editar ejercicio</string>
+    <string name="strength">Fuerza</string>
+    <string name="cardio">Cardio</string>
+    <string name="exercise">Ejercicio</string>
+    <string name="exercise_cardio_hint">Ejercicio (p. ej. Cinta)</string>
+    <string name="sets">Series</string>
+    <string name="reps">Reps</string>
+    <string name="weight">Peso</string>
+    <string name="reps_per_set">Repeticiones por serie</string>
+    <string name="weights_per_set">Pesos por serie</string>
+    <string name="select_for_each_set">selecciona para cada serie</string>
+    <string name="set_number">Serie %d</string>
+    <string name="duration_min">Duración (min)</string>
+    <string name="intensity">Velocidad / inclinación / nivel</string>
+    <string name="seat_adjustment">Asiento / ajuste</string>
+    <string name="other_adjustments">Notas</string>
+
+    <!-- Diálogos -->
+    <string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete">Eliminar</string>
+    <string name="delete_question">¿Eliminar?</string>
+    <string name="name">Nombre</string>
+    <string name="ok">OK</string>
+
+    <!-- Ajustes -->
+    <string name="title_settings">Ajustes</string>
+    <string name="language">Idioma</string>
+    <string name="lang_system">Predeterminado del sistema</string>
+    <string name="data">Datos</string>
+    <string name="export_data">Exportar datos</string>
+    <string name="import_data">Importar datos</string>
+    <string name="export_title">Exportar</string>
+    <string name="export_done">Datos exportados al archivo seleccionado.</string>
+    <string name="export_failed">No se pudo escribir el archivo. Prueba otra ubicación.</string>
+    <string name="import_title">Importar</string>
+    <string name="import_invalid">Este archivo no es una copia de seguridad de GymPlan.</string>
+    <string name="import_question">¿Importar datos?</string>
+    <string name="import_action">Importar</string>
+    <string name="import_summary">La copia tiene %1$d planes, %2$d ejercicios y %3$d pesajes.</string>
+    <string name="import_warning">Se reemplazarán todos los datos actuales. Exporta antes si quieres conservarlos.</string>
+    <string name="import_done">Datos reemplazados por la copia.</string>
+    <string name="about">Acerca de</string>
+    <string name="version">Versión %s</string>
+    <string name="about_text">Planificador de entrenamientos sin conexión. Tus datos se quedan en este teléfono.</string>
+</resources>

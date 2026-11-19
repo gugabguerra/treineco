@@ -5,6 +5,11 @@ file.
 
 ## [Unreleased]
 
+### Added
+
+- Languages: Español, Français and Português (Portugal), alongside English and Português BR
+  (Brazil). The old "Português" option is now Português BR, so saved choices keep their language.
+
 ### Changed
 
 - Icons come from Google's Material Symbols (filled, 24dp) as vector drawables. The
