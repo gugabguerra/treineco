@@ -1,4 +1,4 @@
-# Treineco
+# <img src="app/src/main/ic_launcher-playstore.png" width="48" alt="" align="absmiddle"> Treineco
 
 Treineco is a small Android app for keeping your gym training plans on your phone: every exercise
 with its sets, reps, weight, seat position and machine adjustments, so you stop relying on paper
@@ -9,10 +9,24 @@ It is a single offline app. All data stays in one file in the app's private stor
 no account, no server, no network access. Uninstalling the app or clearing its data deletes
 everything.
 
-![Treineco screens: plan with today's ticks, plan long-press menu, exercise detail with weight chart,
-body weight, new-exercise dialog, settings with data export/import](docs/screenshots/overview.png)
+[![Treineco screens: plan with today's ticks, plan long-press menu, exercise detail with weight
+chart, body weight, new-exercise dialog, settings with data export/import](docs/screenshots/overview.png)](docs/screenshots/overview.png)
 
-Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no real records).
+Click a screen to open it full size. Single screens are in
+[`docs/screenshots/`](docs/screenshots/) (sample data, no real records).
+
+<table>
+<tr>
+<td><a href="docs/screenshots/01-plans.png"><img src="docs/screenshots/01-plans.png" width="200" alt="Plans: today's ticks"></a></td>
+<td><a href="docs/screenshots/02-plan-menu.png"><img src="docs/screenshots/02-plan-menu.png" width="200" alt="Plan long-press menu"></a></td>
+<td><a href="docs/screenshots/03-exercise.png"><img src="docs/screenshots/03-exercise.png" width="200" alt="Exercise detail with weight chart"></a></td>
+</tr>
+<tr>
+<td><a href="docs/screenshots/04-body.png"><img src="docs/screenshots/04-body.png" width="200" alt="Body weight"></a></td>
+<td><a href="docs/screenshots/05-new-exercise.png"><img src="docs/screenshots/05-new-exercise.png" width="200" alt="New-exercise dialog"></a></td>
+<td><a href="docs/screenshots/06-settings.png"><img src="docs/screenshots/06-settings.png" width="200" alt="Settings with data export/import"></a></td>
+</tr>
+</table>
 
 ## Project status
 
@@ -68,6 +82,22 @@ Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no 
   file picker. Import replaces everything that is stored and asks for confirmation first; exported
   files are plain JSON, not encrypted.
 - Android 8.0 (API 26) or newer.
+
+## Install from the APK
+
+Treineco is **not published in the Google Play Store or in any other app store.** The only
+official download is the APK attached to each release on this repository's GitHub Releases page.
+
+1. On the phone, open the Releases page in a browser and download `treineco-<version>.apk`.
+2. Allow installs from that browser or file manager: *Settings → Apps → Special access →
+   Install unknown apps* (the exact menu name varies by Android version).
+3. Open the downloaded file and tap *Install*. If Play Protect warns about an unknown developer,
+   tap *Install anyway*.
+4. Open **Treineco** from the launcher.
+
+To update, download the newer APK and install it over the old one; your data is kept. If Android
+reports a conflict with the installed app (for example, the signing key differs), uninstall the
+old app first. That deletes its data, so export it first in *Settings → Export data*.
 
 ## 1. Run it
 
