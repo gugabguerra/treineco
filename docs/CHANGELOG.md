@@ -5,6 +5,8 @@ file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-19
+
 ### Added
 
 - Languages: Español, Français and Português (Portugal), alongside English and Português BR
