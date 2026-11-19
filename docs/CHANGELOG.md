@@ -7,6 +7,8 @@ file.
 
 ### Changed
 
+- Icons come from Google's Material Symbols (filled, 24dp) as vector drawables. The
+  `material-icons-core` dependency is removed.
 - New / Edit exercise: labels sit above each field, Sets, Reps and Weight share one row, Seat and
   Notes are relabelled, and the split control is an arrow icon with the hint "select for each set".
   Sets and Reps use the same number wheels as before.

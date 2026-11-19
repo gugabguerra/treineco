@@ -42,9 +42,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -324,7 +321,7 @@ fun PlansTab(store: Store, plan: Plan?, now: Long, onSelectPlan: (Long) -> Unit,
                 )
                 if (doneCount > 0) {
                     TextButton({ store.update { d -> d.clearDone(plan.exercises.map { it.id }) } }) {
-                        Icon(Icons.Default.Refresh, null, Modifier.size(18.dp))
+                        Icon(ImageVector.vectorResource(R.drawable.ic_refresh), null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(stringResource(R.string.clear), style = MaterialTheme.typography.labelLarge)
                     }
@@ -373,10 +370,10 @@ fun PlansTab(store: Store, plan: Plan?, now: Long, onSelectPlan: (Long) -> Unit,
                 onClick = { onOpen(e.id) },
             ) {
                 AppMenu(menu == e.id, { menu = null }, listOfNotNull(
-                    MenuAction(Icons.Default.Edit, stringResource(R.string.edit)) { toEdit = e },
+                    MenuAction(ImageVector.vectorResource(R.drawable.ic_edit), stringResource(R.string.edit)) { toEdit = e },
                     MenuAction(ImageVector.vectorResource(R.drawable.ic_copy), stringResource(R.string.clone_exercise)) { toClone = e },
-                    if (plans.size > 1) MenuAction(Icons.Default.ArrowForward, stringResource(R.string.clone_to_plan)) { toMove = e } else null,
-                    MenuAction(Icons.Default.Delete, stringResource(R.string.delete_exercise), destructive = true) { toDelete = e },
+                    if (plans.size > 1) MenuAction(ImageVector.vectorResource(R.drawable.ic_arrow_forward), stringResource(R.string.clone_to_plan)) { toMove = e } else null,
+                    MenuAction(ImageVector.vectorResource(R.drawable.ic_delete), stringResource(R.string.delete_exercise), destructive = true) { toDelete = e },
                 ))
             }
         }
@@ -478,7 +475,7 @@ fun BodyTab(store: Store) {
         item { ChartCard(entries) }
         items(entries.reversed(), key = { it.date }) { e ->
             HistoryRow(e, trailing = {
-                IconButton({ toDelete = e }) { Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = Muted) }
+                IconButton({ toDelete = e }) { Icon(ImageVector.vectorResource(R.drawable.ic_delete), stringResource(R.string.delete), tint = Muted) }
             })
         }
     }
@@ -541,7 +538,7 @@ fun SettingsTab(store: Store) {
                     ) {
                         Text(label, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
                             color = if (tag == current) Accent else Ink)
-                        if (tag == current) Icon(Icons.Default.Check, null, tint = Accent)
+                        if (tag == current) Icon(ImageVector.vectorResource(R.drawable.ic_check), null, tint = Accent)
                     }
                 }
             }
@@ -557,7 +554,7 @@ fun SettingsTab(store: Store) {
                 ) {
                     Text(stringResource(R.string.export_data), Modifier.weight(1f),
                         style = MaterialTheme.typography.titleMedium, color = Ink)
-                    Icon(painterResource(R.drawable.ic_export), null, tint = Muted)
+                    Icon(painterResource(R.drawable.ic_arrow_forward), null, tint = Muted)
                 }
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = GlassBorder)
                 Row(
@@ -568,7 +565,7 @@ fun SettingsTab(store: Store) {
                 ) {
                     Text(stringResource(R.string.import_data), Modifier.weight(1f),
                         style = MaterialTheme.typography.titleMedium, color = Ink)
-                    Icon(painterResource(R.drawable.ic_import), null, tint = Muted)
+                    Icon(painterResource(R.drawable.ic_arrow_back), null, tint = Muted)
                 }
             }
         }
@@ -624,8 +621,8 @@ fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, now: Long, onBack: ()
     ) {
         item {
             Header(ex.name, onBack) {
-                CircleButton(Icons.Default.Edit, stringResource(R.string.edit)) { editing = true }
-                CircleButton(Icons.Default.Delete, stringResource(R.string.delete_exercise)) { deleting = true }
+                CircleButton(ImageVector.vectorResource(R.drawable.ic_edit), stringResource(R.string.edit)) { editing = true }
+                CircleButton(ImageVector.vectorResource(R.drawable.ic_delete), stringResource(R.string.delete_exercise)) { deleting = true }
             }
         }
         item {
@@ -664,7 +661,7 @@ fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, now: Long, onBack: ()
             val shape = RoundedCornerShape(16.dp)
             val toggle = { store.update { it.toggleDone(ex.id) } }
             if (done) OutlinedButton(toggle, mod, shape = shape) {
-                Icon(Icons.Default.Check, null, Modifier.size(20.dp))
+                Icon(ImageVector.vectorResource(R.drawable.ic_check), null, Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.completed_undo), fontWeight = FontWeight.SemiBold)
             }
@@ -733,8 +730,8 @@ fun PlanCards(plans: List<Plan>, selected: Plan?, doneOf: (Plan) -> Int, onSelec
                 AppMenu(menu == p.id, { menu = null }, listOfNotNull(
                     if (plans.size > 1) MenuAction(ImageVector.vectorResource(R.drawable.ic_sort), stringResource(R.string.sort_plans)) { onDialog("sortPlans") } else null,
                     MenuAction(ImageVector.vectorResource(R.drawable.ic_copy), stringResource(R.string.clone_plan)) { onDialog("clonePlan") },
-                    MenuAction(Icons.Default.Edit, stringResource(R.string.rename_plan)) { onDialog("rename") },
-                    MenuAction(Icons.Default.Delete, stringResource(R.string.delete_plan), destructive = true) { onDialog("deletePlan") },
+                    MenuAction(ImageVector.vectorResource(R.drawable.ic_edit), stringResource(R.string.rename_plan)) { onDialog("rename") },
+                    MenuAction(ImageVector.vectorResource(R.drawable.ic_delete), stringResource(R.string.delete_plan), destructive = true) { onDialog("deletePlan") },
                 ))
             }
         }
@@ -748,7 +745,7 @@ fun PlanCards(plans: List<Plan>, selected: Plan?, doneOf: (Plan) -> Int, onSelec
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Icon(Icons.Default.Add, null, tint = Accent)
+                Icon(ImageVector.vectorResource(R.drawable.ic_add), null, tint = Accent)
                 Spacer(Modifier.height(4.dp))
                 Text(stringResource(R.string.new_plan), color = Muted, style = MaterialTheme.typography.labelLarge)
             }
@@ -782,7 +779,7 @@ fun Header(title: String, onBack: (() -> Unit)? = null, actions: @Composable Row
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(10.dp),
 ) {
-    onBack?.let { CircleButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back), it) }
+    onBack?.let { CircleButton(ImageVector.vectorResource(R.drawable.ic_arrow_back), stringResource(R.string.back), it) }
     Text(
         title, Modifier.weight(1f),
         style = if (onBack == null) MaterialTheme.typography.displaySmall else MaterialTheme.typography.headlineSmall,
@@ -851,7 +848,7 @@ fun CheckCircle(done: Boolean, label: String, onToggle: () -> Unit) = Box(
         Modifier.size(32.dp).clip(CircleShape).background(fill)
             .border(2.dp, if (done) Accent else Muted.copy(alpha = 0.6f), CircleShape),
         contentAlignment = Alignment.Center,
-    ) { if (done) Icon(Icons.Default.Check, null, Modifier.size(20.dp), tint = OnAccent) }
+    ) { if (done) Icon(ImageVector.vectorResource(R.drawable.ic_check), null, Modifier.size(20.dp), tint = OnAccent) }
 }
 
 @Composable
@@ -895,14 +892,14 @@ fun BottomBar(tab: Int, onTab: (Int) -> Unit, modifier: Modifier, onAdd: (() -> 
     horizontalArrangement = Arrangement.spacedBy(4.dp),
 ) {
     NavItem(ImageVector.vectorResource(R.drawable.ic_fitness), stringResource(R.string.nav_plans), tab == 0) { onTab(0) }
-    NavItem(Icons.Default.Person, stringResource(R.string.nav_body), tab == 1) { onTab(1) }
-    NavItem(Icons.Default.Settings, stringResource(R.string.nav_settings), tab == 2) { onTab(2) }
+    NavItem(ImageVector.vectorResource(R.drawable.ic_person), stringResource(R.string.nav_body), tab == 1) { onTab(1) }
+    NavItem(ImageVector.vectorResource(R.drawable.ic_settings), stringResource(R.string.nav_settings), tab == 2) { onTab(2) }
     if (onAdd != null) {
         Box(Modifier.padding(horizontal = 6.dp).width(1.dp).height(28.dp).background(GlassBorder))
         Box(
             Modifier.size(48.dp).clip(CircleShape).background(Accent).clickable(onClick = onAdd),
             contentAlignment = Alignment.Center,
-        ) { Icon(Icons.Default.Add, stringResource(R.string.add), Modifier.size(24.dp), tint = OnAccent) }
+        ) { Icon(ImageVector.vectorResource(R.drawable.ic_add), stringResource(R.string.add), Modifier.size(24.dp), tint = OnAccent) }
     }
 }
 
@@ -1331,11 +1328,11 @@ fun SortPlansDialog(plans: List<Plan>, onDismiss: () -> Unit, onSave: (List<Long
                     Text(p.name, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
                     IconButton({ move(i, i - 1) }, enabled = i > 0) {
-                        Icon(Icons.Default.KeyboardArrowUp, stringResource(R.string.move_up, p.name),
+                        Icon(ImageVector.vectorResource(R.drawable.ic_keyboard_arrow_up), stringResource(R.string.move_up, p.name),
                             tint = if (i > 0) Ink else Muted.copy(alpha = 0.3f))
                     }
                     IconButton({ move(i, i + 1) }, enabled = i < order.lastIndex) {
-                        Icon(Icons.Default.KeyboardArrowDown, stringResource(R.string.move_down, p.name),
+                        Icon(ImageVector.vectorResource(R.drawable.ic_keyboard_arrow_down), stringResource(R.string.move_down, p.name),
                             tint = if (i < order.lastIndex) Ink else Muted.copy(alpha = 0.3f))
                     }
                 }
