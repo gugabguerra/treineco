@@ -20,7 +20,7 @@ android {
     namespace = "com.example.gymplan"
     compileSdk = 36
     defaultConfig {
-        applicationId = "gugabguerra.gymplan"
+        applicationId = "gugabguerra.treineco"
         minSdk = 26
         targetSdk = 36
         versionCode = major * 10000 + minor * 100 + patch

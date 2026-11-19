@@ -6,7 +6,7 @@ STUDIO_JDK := /Applications/Android Studio.app/Contents/jbr/Contents/Home
 export JAVA_HOME ?= $(shell test -d '$(STUDIO_JDK)' && echo '$(STUDIO_JDK)')
 
 GRADLE := ./gradlew
-APP_ID := gugabguerra.gymplan
+APP_ID := gugabguerra.treineco
 
 .PHONY: help run build release test lint fmt clean
 

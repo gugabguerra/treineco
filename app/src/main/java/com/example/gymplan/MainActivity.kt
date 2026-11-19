@@ -555,7 +555,7 @@ fun SettingsTab(store: Store) {
             GlassCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth(), padding = PaddingValues(vertical = 4.dp)) {
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-                        .clickable { exportLauncher.launch("gymplan-${LocalDate.now()}.json") }
+                        .clickable { exportLauncher.launch("treineco-${LocalDate.now()}.json") }
                         .padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

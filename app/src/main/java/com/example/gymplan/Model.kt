@@ -223,7 +223,7 @@ fun parseData(s: String): Data {
     )
 }
 
-/** Exports are a few KB; a larger pick is not a GymPlan backup and is not read into memory. */
+/** Exports are a few KB; a larger pick is not a Treineco backup and is not read into memory. */
 const val MAX_BACKUP_BYTES = 1 shl 20
 
 /**

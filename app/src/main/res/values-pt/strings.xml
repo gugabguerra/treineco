@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Gym Plan</string>
+    <string name="app_name">Treineco</string>
 
     <!-- Navegação -->
     <string name="nav_plans">Planos</string>
@@ -102,7 +102,7 @@
     <string name="export_done">Dados exportados para o ficheiro selecionado.</string>
     <string name="export_failed">Não foi possível escrever o ficheiro. Tente outro local.</string>
     <string name="import_title">Importar</string>
-    <string name="import_invalid">Este ficheiro não é uma cópia de segurança do GymPlan.</string>
+    <string name="import_invalid">Este ficheiro não é uma cópia de segurança do Treineco.</string>
     <string name="import_question">Importar dados?</string>
     <string name="import_action">Importar</string>
     <string name="import_summary">A cópia tem %1$d planos, %2$d exercícios e %3$d pesagens.</string>

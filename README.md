@@ -1,6 +1,6 @@
-# GymPlan
+# Treineco
 
-GymPlan is a small Android app for keeping your gym training plans on your phone: every exercise
+Treineco is a small Android app for keeping your gym training plans on your phone: every exercise
 with its sets, reps, weight, seat position and machine adjustments, so you stop relying on paper
 cards, notes apps or memory between sessions. It also tracks how your working weights and your
 body weight change over time.
@@ -9,7 +9,7 @@ It is a single offline app. All data stays in one file in the app's private stor
 no account, no server, no network access. Uninstalling the app or clearing its data deletes
 everything.
 
-![GymPlan screens: plan with today's ticks, plan long-press menu, exercise detail with weight chart,
+![Treineco screens: plan with today's ticks, plan long-press menu, exercise detail with weight chart,
 body weight, new-exercise dialog, settings with data export/import](docs/screenshots/overview.png)
 
 Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no real records).
@@ -100,7 +100,7 @@ The app logs nothing of its own. Crashes show up in logcat:
 
 ```bash
 adb logcat -b crash
-adb logcat --pid=$(adb shell pidof gugabguerra.gymplan)
+adb logcat --pid=$(adb shell pidof gugabguerra.treineco)
 ```
 
 ### Data
@@ -109,10 +109,10 @@ Everything lives in `files/gym.json` inside the app's private storage, written a
 file + rename). If the file cannot be parsed on startup it is renamed to `gym.json.bad-<epoch ms>`
 and the app starts empty instead of overwriting it. Settings → *Export data* writes the same JSON
 to a file you choose; *Import data* replaces all data with a file in that format, and rejects
-files that are not GymPlan backups. On a debug build you can also copy the file out with:
+files that are not Treineco backups. On a debug build you can also copy the file out with:
 
 ```bash
-adb shell run-as gugabguerra.gymplan cat files/gym.json > gym-backup.json
+adb shell run-as gugabguerra.treineco cat files/gym.json > gym-backup.json
 ```
 
 ## Security notes

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to GymPlan. Newest first; versions match the git tags and the root `VERSION`
+All notable changes to Treineco. Newest first; versions match the git tags and the root `VERSION`
 file.
 
 ## [Unreleased]
@@ -12,6 +12,10 @@ file.
 
 ### Changed
 
+- The app is renamed Treineco (launcher label, title, export file `treineco-<date>.json`).
+- Application id is now `gugabguerra.treineco`. It installs as a separate app from
+  `gugabguerra.gymplan` builds, which keep their own data; export from the old app and import
+  into the new one to move it.
 - Icons come from Google's Material Symbols (filled, 24dp) as vector drawables. The
   `material-icons-core` dependency is removed.
 - New / Edit exercise: labels sit above each field, Sets, Reps and Weight share one row, Seat and

@@ -1,6 +1,6 @@
 # Security
 
-GymPlan is a single-user, offline Android app. It has no account, no server and no network code;
+Treineco is a single-user, offline Android app. It has no account, no server and no network code;
 it requests no Android permissions. The only data it handles is what you type in — plans,
 exercise settings, body weight — stored on the phone.
 
@@ -19,7 +19,7 @@ exercise settings, body weight — stored on the phone.
 - **Exported files** are plain JSON with your plans, exercise history and body weight, without
   encryption. Protection depends on where you save the file (local folder, cloud drive, chat app).
   Mitigation: export to a trusted location and delete copies you no longer need.
-- **Debug builds** allow `adb shell run-as gugabguerra.gymplan` to read the file from a connected
+- **Debug builds** allow `adb shell run-as gugabguerra.treineco` to read the file from a connected
   computer with USB debugging authorized. Mitigation: install a release build, or turn USB
   debugging off when not developing.
 - **Backups**: Android's default auto-backup may copy app data to your Google account backup.
