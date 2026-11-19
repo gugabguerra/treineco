@@ -61,6 +61,9 @@ Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no 
   bottom bar with the add button built in.
 - Settings: choose the app language — system default, English or Portuguese (Brazil) — without
   changing the phone's language. Numbers and dates follow the chosen language.
+- Settings: export all data to a JSON file or import a backup, choosing the file with Android's
+  file picker. Import replaces everything that is stored and asks for confirmation first; exported
+  files are plain JSON, not encrypted.
 - Android 8.0 (API 26) or newer.
 
 ## 1. Run it
@@ -101,7 +104,9 @@ adb logcat --pid=$(adb shell pidof gugabguerra.gymplan)
 
 Everything lives in `files/gym.json` inside the app's private storage, written atomically (temp
 file + rename). If the file cannot be parsed on startup it is renamed to `gym.json.bad-<epoch ms>`
-and the app starts empty instead of overwriting it. On a debug build you can back it up with:
+and the app starts empty instead of overwriting it. Settings → *Export data* writes the same JSON to
+a file you choose; *Import data* replaces all data with a file in that format, and rejects files
+that are not GymPlan backups. On a debug build you can also copy the file out with:
 
 ```bash
 adb shell run-as gugabguerra.gymplan cat files/gym.json > gym-backup.json
@@ -109,9 +114,9 @@ adb shell run-as gugabguerra.gymplan cat files/gym.json > gym-backup.json
 
 ## Security notes
 
-The app requests no permissions and has no network access; your data never leaves the phone. It
-is not encrypted beyond Android's own app sandbox and device encryption. Details in
-[docs/SECURITY.md](docs/SECURITY.md).
+The app requests no permissions and has no network access; your data never leaves the phone unless
+you export it yourself to a file you choose. It is not encrypted beyond Android's own app sandbox
+and device encryption. Details in [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Version history
 

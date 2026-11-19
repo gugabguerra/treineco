@@ -8,8 +8,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -68,6 +70,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -87,6 +90,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import java.io.File
 import java.text.DateFormat
+import java.time.LocalDate
 import java.util.Date
 import java.util.Locale
 
@@ -221,7 +225,7 @@ fun HomeScreen(store: Store, tab: Int, plan: Plan?, now: Long, onTab: (Int) -> U
             when (t) {
                 0 -> PlansTab(store, plan, now, onSelectPlan, onOpen, onDialog = { dialog = it })
                 1 -> BodyTab(store)
-                else -> SettingsTab()
+                else -> SettingsTab(store)
             }
         }
         BottomBar(tab, onTab, Modifier.align(Alignment.BottomCenter), onAdd = if (tab == 2) null else {
@@ -482,10 +486,34 @@ fun BodyTab(store: Store) {
 }
 
 @Composable
-fun SettingsTab() {
+fun SettingsTab(store: Store) {
     val ctx = LocalContext.current
     val current = remember { Lang.get(ctx) }
     val version = remember { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName.orEmpty() }
+    var importPreview by remember { mutableStateOf<Data?>(null) }
+    var notice by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    // Plain JSON, same bytes as files/gym.json; the system picker grants access to one chosen file.
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            val ok = try {
+                ctx.contentResolver.openOutputStream(uri)
+                    ?.use { it.write(store.data.toJson().toByteArray(Charsets.UTF_8)) } != null
+            } catch (e: Exception) {
+                false
+            }
+            notice = R.string.export_title to if (ok) R.string.export_done else R.string.export_failed
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            val backup = try {
+                ctx.contentResolver.openInputStream(uri)?.use { it.readTextAtMost() }?.let(::parseBackup)
+            } catch (e: Exception) {
+                null
+            }
+            if (backup == null) notice = R.string.import_title to R.string.import_invalid else importPreview = backup
+        }
+    }
     LazyColumn(contentPadding = PaddingValues(bottom = 120.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Header(stringResource(R.string.title_settings)) }
         item { SectionLabel(stringResource(R.string.language)) }
@@ -513,6 +541,32 @@ fun SettingsTab() {
                 }
             }
         }
+        item { SectionLabel(stringResource(R.string.data)) }
+        item {
+            GlassCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth(), padding = PaddingValues(vertical = 4.dp)) {
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                        .clickable { exportLauncher.launch("gymplan-${LocalDate.now()}.json") }
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(stringResource(R.string.export_data), Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleMedium, color = Ink)
+                    Icon(painterResource(R.drawable.ic_export), null, tint = Muted)
+                }
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = GlassBorder)
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                        .clickable { importLauncher.launch(arrayOf("*/*")) }
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(stringResource(R.string.import_data), Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleMedium, color = Ink)
+                    Icon(painterResource(R.drawable.ic_import), null, tint = Muted)
+                }
+            }
+        }
         item { SectionLabel(stringResource(R.string.about)) }
         item {
             GlassCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth()) {
@@ -522,6 +576,31 @@ fun SettingsTab() {
                 Text(stringResource(R.string.about_text), color = Muted, style = MaterialTheme.typography.bodyMedium)
             }
         }
+    }
+    importPreview?.let { d ->
+        AppDialog(
+            stringResource(R.string.import_question),
+            stringResource(R.string.import_action),
+            onDismiss = { importPreview = null },
+            onConfirm = {
+                store.update { d }
+                importPreview = null
+                notice = R.string.import_title to R.string.import_done
+            },
+            destructive = true,
+        ) {
+            Column {
+                Text(
+                    stringResource(R.string.import_summary, d.plans.size, d.plans.sumOf { it.exercises.size }, d.body.size),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(stringResource(R.string.import_warning), color = Muted, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+    notice?.let { (title, text) ->
+        NoticeDialog(stringResource(title), stringResource(text)) { notice = null }
     }
 }
 
@@ -904,6 +983,27 @@ fun AppMenu(expanded: Boolean, onDismiss: () -> Unit, actions: List<MenuAction>)
 }
 
 // ---------- Dialogs ----------
+
+/** Plain confirmation with a single OK button, used for export/import results. */
+@Composable
+fun NoticeDialog(title: String, text: String, onDismiss: () -> Unit) {
+    val shape = RoundedCornerShape(28.dp)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.border(1.dp, GlassBorder, shape),
+        shape = shape,
+        containerColor = DialogBg,
+        titleContentColor = Ink,
+        textContentColor = Ink.copy(alpha = 0.85f),
+        title = { Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold) },
+        text = { Text(text, style = MaterialTheme.typography.bodyLarge) },
+        confirmButton = {
+            Button(onDismiss, shape = RoundedCornerShape(14.dp)) {
+                Text(stringResource(R.string.ok), fontWeight = FontWeight.SemiBold)
+            }
+        },
+    )
+}
 
 /** Shared dialog chrome: glass border, rounded corners, filled confirm button (red when destructive). */
 @Composable

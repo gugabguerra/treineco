@@ -5,6 +5,13 @@ file.
 
 ## [Unreleased]
 
+### Added
+
+- Settings → *Export data* and *Import data*: save all plans, history, weigh-ins and defaults to a
+  JSON file or restore from one, using Android's file picker. Import replaces all data after a
+  confirmation that shows what the backup contains; files that are not GymPlan backups are rejected.
+  The format is the same JSON as the app's storage file, unencrypted.
+
 ## [0.3.0] - 2026-11-18
 
 ### Added

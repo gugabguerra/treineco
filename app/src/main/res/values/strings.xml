@@ -87,6 +87,7 @@
     <string name="delete">Delete</string>
     <string name="delete_question">Delete?</string>
     <string name="name">Name</string>
+    <string name="ok">OK</string>
 
     <!-- Settings -->
     <string name="title_settings">Settings</string>
@@ -95,6 +96,19 @@
     <!-- Language names stay in their own language (endonyms). -->
     <string name="lang_en" translatable="false">English</string>
     <string name="lang_pt" translatable="false">Português</string>
+    <string name="data">Data</string>
+    <string name="export_data">Export data</string>
+    <string name="import_data">Import data</string>
+    <string name="export_title">Export</string>
+    <string name="export_done">Data exported to the selected file.</string>
+    <string name="export_failed">Could not write the file. Try another location.</string>
+    <string name="import_title">Import</string>
+    <string name="import_invalid">This file is not a GymPlan backup.</string>
+    <string name="import_question">Import data?</string>
+    <string name="import_action">Import</string>
+    <string name="import_summary">The backup has %1$d plans, %2$d exercises and %3$d weigh-ins.</string>
+    <string name="import_warning">All current data will be replaced. Export first if you want to keep it.</string>
+    <string name="import_done">Data replaced by the backup.</string>
     <string name="about">About</string>
     <string name="version">Version %s</string>
     <string name="about_text">Offline training planner. Your data stays on this phone.</string>

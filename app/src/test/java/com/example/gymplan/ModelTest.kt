@@ -1,6 +1,7 @@
 package com.example.gymplan
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
 
@@ -153,5 +154,36 @@ class ModelTest {
             .toggleDone(1, now = 1_700_000_000_000L)
             .upsertExercise(10, Exercise(2, "Treadmill", 1, "", 0.0, "", "", true, 25, "8 km/h, 3%"), now = 100)
         assertEquals(d, parseData(d.toJson()))
+    }
+
+    @Test
+    fun exportedBackupImportsBackUnchanged() {
+        val d = Data()
+            .upsertPlan(Plan(10, "A"))
+            .upsertExercise(10, ex, now = 100)
+            .copy(body = listOf(WeightEntry(5, 82.5)))
+            .toggleDone(1, now = 1_700_000_000_000L)
+        assertEquals(d, parseBackup(d.toJson()))
+    }
+
+    @Test
+    fun backupMustBeAJsonObjectWithPlans() {
+        assertNull(parseBackup(""))
+        assertNull(parseBackup("not json"))
+        assertNull(parseBackup("[]"))
+        assertNull(parseBackup("{}"))
+        assertNull(parseBackup("""{"foo":1}"""))
+        assertNull(parseBackup("""{"plans":{}}"""))
+        assertNull(parseBackup("""{"plans":[{"name":"missing id"}]}"""))
+        assertEquals(Data(), parseBackup("""{"plans":[]}"""))     // an emptied app is a valid backup
+        assertEquals(listOf("A"), parseBackup("""{"plans":[{"id":10,"name":"A"}]}""")?.plans?.map { it.name })
+    }
+
+    @Test
+    fun oversizedImportIsRejected() {
+        val fit = ByteArray(MAX_BACKUP_BYTES) { 'x'.code.toByte() }
+        assertEquals(MAX_BACKUP_BYTES, fit.inputStream().readTextAtMost()?.length)
+        val tooBig = fit + 'x'.code.toByte()
+        assertNull(tooBig.inputStream().readTextAtMost())
     }
 }

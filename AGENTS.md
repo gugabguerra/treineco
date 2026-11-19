@@ -44,6 +44,32 @@ can't be enforced by tests or code comments. Routing: feature behavior → READM
 - No system JDK on the maintainer's Mac: the Makefile falls back to Android Studio's bundled JBR;
   raw `./gradlew` calls need `JAVA_HOME` set the same way.
 
+### Feature check (emulator)
+
+Every new feature or user-visible fix must be exercised on an emulator before reporting it done.
+JVM tests cover pure logic only; they do not cover Compose UI, system pickers, permissions, screen
+state or the real storage file.
+
+1. Start an emulator (on macOS `emulator` is often not on `PATH`; use
+   `$SDK/emulator/emulator -avd <name>`, with `$SDK` from `local.properties`). Wait for
+   `adb shell getprop sys.boot_completed` to return `1`, then run `make run`.
+2. Use realistic synthetic data instead of hand-entering it when the feature needs history,
+   several plans or existing records:
+   ```bash
+   adb shell am force-stop gugabguerra.gymplan
+   adb push seed.json /data/local/tmp/seed.json
+   adb shell run-as gugabguerra.gymplan cp /data/local/tmp/seed.json files/gym.json
+   adb shell rm /data/local/tmp/seed.json
+   adb shell am start -n gugabguerra.gymplan/com.example.gymplan.MainActivity
+   ```
+   The JSON must match the current schema; an accepted file proves little unless the parsed result
+   appears in the UI.
+3. Drive the feature through the UI, including its empty and failure paths, not just the happy path.
+4. Verify persistence and lifecycle: read `files/gym.json` after a mutation, force-stop and
+   relaunch, and rotate when state must survive a configuration change.
+5. Check that `adb logcat -b crash` stays empty and that the screen matches the intended layout.
+6. Keep one current package installed; uninstall stale application ids that show duplicate icons.
+
 ## Git workflow
 
 - **Never commit without the user's explicit acknowledgement** — ask first, then wait. Keep

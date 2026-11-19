@@ -5,7 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.InputStream
 
 data class Exercise(
     val id: Long,
@@ -216,6 +218,32 @@ fun parseData(s: String): Data {
                 if (it.has("weight")) it.getDouble("weight") else null)
         } ?: ExerciseDefaults(),
     )
+}
+
+/** Exports are a few KB; a larger pick is not a GymPlan backup and is not read into memory. */
+const val MAX_BACKUP_BYTES = 1 shl 20
+
+/**
+ * Parses a file picked for import. Returns null unless it is a JSON object with a `plans` array,
+ * so a stray file can never import as empty data and wipe everything.
+ */
+fun parseBackup(s: String): Data? = try {
+    if (JSONObject(s).optJSONArray("plans") == null) null else parseData(s)
+} catch (e: Exception) {
+    null
+}
+
+/** Reads the stream as UTF-8, or returns null when it holds more than [maxBytes]. */
+fun InputStream.readTextAtMost(maxBytes: Int = MAX_BACKUP_BYTES): String? {
+    val out = ByteArrayOutputStream()
+    val buf = ByteArray(8 * 1024)
+    while (true) {
+        val n = read(buf)
+        if (n < 0) break
+        out.write(buf, 0, n)
+        if (out.size() > maxBytes) return null
+    }
+    return out.toString("UTF-8")
 }
 
 class Store(private val file: File) {

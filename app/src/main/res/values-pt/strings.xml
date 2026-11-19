@@ -88,11 +88,25 @@
     <string name="delete">Excluir</string>
     <string name="delete_question">Excluir?</string>
     <string name="name">Nome</string>
+    <string name="ok">OK</string>
 
     <!-- Settings -->
     <string name="title_settings">Ajustes</string>
     <string name="language">Idioma</string>
     <string name="lang_system">Padrão do sistema</string>
+    <string name="data">Dados</string>
+    <string name="export_data">Exportar dados</string>
+    <string name="import_data">Importar dados</string>
+    <string name="export_title">Exportar</string>
+    <string name="export_done">Dados exportados para o arquivo selecionado.</string>
+    <string name="export_failed">Não foi possível gravar o arquivo. Tente outro local.</string>
+    <string name="import_title">Importar</string>
+    <string name="import_invalid">Este arquivo não é um backup do GymPlan.</string>
+    <string name="import_question">Importar dados?</string>
+    <string name="import_action">Importar</string>
+    <string name="import_summary">O backup tem %1$d treinos, %2$d exercícios e %3$d pesagens.</string>
+    <string name="import_warning">Todos os dados atuais serão substituídos. Exporte antes se quiser mantê-los.</string>
+    <string name="import_done">Dados substituídos pelo backup.</string>
     <string name="about">Sobre</string>
     <string name="version">Versão %s</string>
     <string name="about_text">Planejador de treinos offline. Seus dados ficam neste celular.</string>
