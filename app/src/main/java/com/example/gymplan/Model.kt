@@ -30,18 +30,21 @@ val Exercise.unit get() = if (cardio) "min" else "kg"
 
 /** Training-list reps: "10" for one set, "× 10" when sets is 1, "3 × 10", or "12 / 10 / 8" when reps vary. */
 fun Exercise.cardReps(): String = when {
-    repsPerSet.distinct().size > 1 -> repsSummary()
+    repsPerSet.distinct().size > 1 -> abbreviate(repsPerSet.distinct().map { it.toString() }, 3)
     sets == 1 -> "× ${repsSummary()}"
     else -> "$sets × ${repsSummary()}"
 }
 
-/** Training-list weights when they vary: "70 / 65 / 60"; over four values, the first three and "...". */
+/** Training-list weights when they vary: "70 / 65 / 60"; over three values, the first three and "...". */
 fun Exercise.cardWeights(): String? {
     val values = weightsPerSet.distinct()
     if (values.size <= 1) return null
-    val shown = values.map(::fmt)
-    return if (shown.size > 4) shown.take(3).joinToString(" / ") + " / ..." else shown.joinToString(" / ")
+    return abbreviate(values.map(::fmt), 3)
 }
+
+/** Joins distinct values with " / "; past [max] values, shows the first [max] and " / ...". */
+private fun abbreviate(values: List<String>, max: Int): String =
+    if (values.size > max) values.take(max).joinToString(" / ") + " / ..." else values.joinToString(" / ")
 
 data class Plan(val id: Long, val name: String, val exercises: List<Exercise> = emptyList())
 

@@ -34,8 +34,8 @@ Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no 
 - With more than one set, tap the arrow icon beside the Reps or Weight label (down to split, up to
   join) to set different reps or a different weight per set. Per-set cells sit in one row up to
   six sets, then wrap into rows of four.
-- The training list shows varying reps and weights per set (weights: at most three values, then
-  `...`); a single set shows only its reps.
+- The training list shows the weight with its unit, and sets × reps below it. Varying reps and
+  weights per set show the first three values, then `...`; open the exercise for the full list.
 - Cardio exercises (treadmill, bike, …) store duration in minutes, speed / incline / level and
   notes.
 - A new exercise starts with the sets, reps and weight of the last strength exercise you added.

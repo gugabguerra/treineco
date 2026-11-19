@@ -117,12 +117,18 @@ class ModelTest {
     }
 
     @Test
-    fun cardWeightsShowsVariationsAndTruncatesAboveFour() {
+    fun cardWeightsShowsVariationsAndTruncatesAboveThree() {
         assertEquals(null, ex.copy(sets = 3, weightsPerSet = listOf(70.0, 70.0, 70.0)).cardWeights())
         assertEquals("70 / 65 / 60", ex.copy(sets = 3, weightsPerSet = listOf(70.0, 65.0, 60.0)).cardWeights())
-        assertEquals("70 / 65 / 60 / 55", ex.copy(sets = 4, weightsPerSet = listOf(70.0, 65.0, 60.0, 55.0)).cardWeights())
         assertEquals("70 / 65 / 60 / ...",
-            ex.copy(sets = 5, weightsPerSet = listOf(70.0, 65.0, 60.0, 55.0, 50.0)).cardWeights())
+            ex.copy(sets = 4, weightsPerSet = listOf(70.0, 65.0, 60.0, 55.0)).cardWeights())
+    }
+
+    @Test
+    fun cardRepsTruncatesAboveThree() {
+        assertEquals("5 × 12", ex.copy(sets = 5, reps = "12", repsPerSet = listOf(12, 12, 12, 12, 12)).cardReps())
+        assertEquals("12 / 10 / 8", ex.copy(sets = 3, reps = "12", repsPerSet = listOf(12, 10, 8)).cardReps())
+        assertEquals("12 / 10 / 8 / ...", ex.copy(sets = 4, reps = "12", repsPerSet = listOf(12, 10, 8, 6)).cardReps())
     }
 
     @Test

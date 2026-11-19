@@ -10,6 +10,8 @@ file.
 - New / Edit exercise: labels sit above each field, Sets, Reps and Weight share one row, Seat and
   Notes are relabelled, and the split control is an arrow icon with the hint "select for each set".
   Sets and Reps use the same number wheels as before.
+- Training list: sets × reps sit under the weight on the right, and the exercise name wraps to two
+  lines before it is cut. Varying reps and weights show the first three values, then `...`.
 
 ### Fixed
 

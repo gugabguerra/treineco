@@ -427,28 +427,31 @@ fun ExerciseCard(
         }
         Column(Modifier.weight(1f)) {
             Text(e.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                listOfNotNull(
-                    if (e.cardio) e.intensity.ifBlank { stringResource(R.string.cardio) }
-                    else e.cardReps(),
-                    e.seat.takeIf { !e.cardio && it.isNotBlank() }?.let { stringResource(R.string.seat_value, it) },
-                ).joinToString("  ·  "),
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
+            val subtitle = listOfNotNull(
+                if (e.cardio) e.intensity.ifBlank { stringResource(R.string.cardio) } else null,
+                e.seat.takeIf { !e.cardio && it.isNotBlank() }?.let { stringResource(R.string.seat_value, it) },
+            ).joinToString("  ·  ")
+            if (subtitle.isNotEmpty()) Text(
+                subtitle,
                 style = MaterialTheme.typography.bodyMedium, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
-        // A bodyweight exercise has no load to show: omit the 0 kg column instead.
-        if (e.cardio || e.tracked > 0.0) {
-            Column(horizontalAlignment = Alignment.End) {
+        // Strength: sets × reps sit beside the weight. A bodyweight exercise has no load to show,
+        // so its 0 kg column is omitted; cardio shows its duration.
+        val showWeight = e.cardio || e.tracked > 0.0
+        if (!e.cardio || showWeight) Column(horizontalAlignment = Alignment.Start) {
+            if (showWeight) Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 val varied = if (e.cardio) null else e.cardWeights()
-                if (varied != null) {
-                    Text(varied, style = MaterialTheme.typography.titleMedium, color = Accent, fontWeight = FontWeight.Bold,
-                        maxLines = 1)
-                } else {
-                    Text(fmt(e.tracked), style = MaterialTheme.typography.titleLarge, color = Accent, fontWeight = FontWeight.Bold)
-                }
+                if (varied != null) Text(varied, Modifier.widthIn(max = 150.dp), style = MaterialTheme.typography.titleMedium,
+                    color = Accent, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                else Text(fmt(e.tracked), style = MaterialTheme.typography.titleLarge.copy(
+                    fontSize = MaterialTheme.typography.titleLarge.fontSize * 0.85f),
+                    color = Accent, fontWeight = FontWeight.Bold)
                 Text(e.unit, style = MaterialTheme.typography.labelSmall, color = Muted)
             }
+            if (!e.cardio) Text(e.cardReps(), Modifier.widthIn(max = 150.dp), style = MaterialTheme.typography.bodyMedium,
+                color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         CheckCircle(done, e.name, onToggle)
     }
