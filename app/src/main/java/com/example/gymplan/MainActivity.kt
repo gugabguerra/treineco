@@ -39,11 +39,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -57,6 +57,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -80,6 +81,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -632,7 +634,8 @@ fun ExerciseScreen(store: Store, plan: Plan, ex: Exercise, now: Long, onBack: ()
                     BigWeight(ex.tracked, ex.unit)
                     Spacer(Modifier.height(12.dp))
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Pills wrap onto a new line instead of squeezing the long weight summary into a column.
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (ex.cardio) Pill(ex.intensity.ifBlank { stringResource(R.string.cardio) })
                     else {
                         Pill(pluralStringResource(R.plurals.sets_count, ex.sets, ex.sets))
@@ -1081,6 +1084,7 @@ fun Segmented(options: List<String>, selected: Int, onSelect: (Int) -> Unit) = R
 fun NumberWheel(
     value: Int, range: IntRange, onChange: (Int) -> Unit,
     modifier: Modifier = Modifier, rows: Int = 5, itemHeight: Dp = 36.dp,
+    textStyle: TextStyle = MaterialTheme.typography.titleLarge,
 ) {
     val values = range.toList()
     val initial = (value - range.first).coerceIn(values.indices)
@@ -1134,7 +1138,7 @@ fun NumberWheel(
             ) {
                 Text(
                     values[i].toString(),
-                    style = MaterialTheme.typography.titleLarge,
+                    style = textStyle,
                     fontWeight = if (distance == 0) FontWeight.SemiBold else FontWeight.Normal,
                     color = Ink,
                     modifier = Modifier.graphicsLayer {
@@ -1148,22 +1152,116 @@ fun NumberWheel(
     }
 }
 
-/** Bordered field with a label, current value and vertical wheel; [action] sits inside it. */
+// Compact numeric row: label outside the box, three-row wheel inside it.
+private val wheelRows = 3
+private val wheelItemHeight = 26.dp
+private val numericFieldHeight = wheelItemHeight * wheelRows
+
+/** Label above the field; the split action, when present, ends the same line. */
 @Composable
-fun WheelField(
-    label: String, value: Int, range: IntRange, onChange: (Int) -> Unit,
-    modifier: Modifier = Modifier, action: (@Composable () -> Unit)? = null,
-) = Column(
-    modifier.clip(RoundedCornerShape(14.dp)).background(Glass)
-        .border(1.dp, GlassBorder, RoundedCornerShape(14.dp))
-        .padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+fun FieldHeader(
+    label: String, hint: String?, active: Boolean, onToggle: (() -> Unit)?, description: String,
+    modifier: Modifier = Modifier,
+) = Row(
+    modifier.fillMaxWidth().height(40.dp),
+    verticalAlignment = Alignment.CenterVertically,
 ) {
-    Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.weight(1f), color = Muted, style = MaterialTheme.typography.labelLarge)
-        Text("$value", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        if (action != null) action() else Spacer(Modifier.width(14.dp))
+    Text(
+        label, Modifier.weight(1f).padding(start = 4.dp),
+        color = Muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+    )
+    if (active && hint != null) Text(
+        hint, Modifier.padding(end = 2.dp),
+        color = Muted, style = MaterialTheme.typography.labelSmall, maxLines = 1,
+    )
+    if (onToggle != null) SplitToggle(active, description, onToggle)
+}
+
+/** Open / close the per-set breakdown; the arrow points down to open and up to close. */
+@Composable
+fun SplitToggle(active: Boolean, description: String, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    val icon = ImageVector.vectorResource(if (active) R.drawable.ic_more_up else R.drawable.ic_more_down)
+    Box(
+        modifier.size(40.dp).clip(CircleShape).toggleable(active, role = Role.Switch) { onToggle() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier.size(30.dp).clip(CircleShape)
+                .background(if (active) Accent else Glass)
+                .border(1.dp, if (active) Accent else GlassBorder, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, description, Modifier.size(18.dp), tint = if (active) OnAccent else Muted)
+        }
     }
-    NumberWheel(value, range, onChange, Modifier.fillMaxWidth(), rows = 3, itemHeight = 32.dp)
+}
+
+/** Compact vertical wheel in a card, sized to line up with [WeightCard]. */
+@Composable
+fun WheelCard(value: Int, range: IntRange, onChange: (Int) -> Unit, modifier: Modifier = Modifier) = Box(
+    modifier.fillMaxWidth().height(numericFieldHeight).clip(RoundedCornerShape(14.dp))
+        .background(Glass).border(1.dp, GlassBorder, RoundedCornerShape(14.dp)),
+) {
+    NumberWheel(
+        value, range, onChange, Modifier.fillMaxWidth(), rows = wheelRows, itemHeight = wheelItemHeight,
+        textStyle = MaterialTheme.typography.titleMedium,
+    )
+}
+
+/** Same size as the centred wheel item (titleMedium, SemiBold, scaled 1.2x in [NumberWheel]). */
+@Composable
+private fun selectedWheelStyle(color: Color) = MaterialTheme.typography.titleMedium.copy(
+    color = color, fontWeight = FontWeight.SemiBold,
+    fontSize = MaterialTheme.typography.titleMedium.fontSize * 1.2f,
+)
+
+/** Weight input drawn like [WheelCard] so the three numeric fields share one height. */
+@Composable
+fun WeightCard(value: String, onChange: (String) -> Unit, unit: String, modifier: Modifier = Modifier) = Box(
+    modifier.fillMaxWidth().height(numericFieldHeight).clip(RoundedCornerShape(14.dp))
+        .background(Glass).border(1.dp, GlassBorder, RoundedCornerShape(14.dp)),
+) {
+    Row(
+        Modifier.fillMaxSize().padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BasicTextField(
+            value, onChange, Modifier.weight(1f),
+            singleLine = true,
+            textStyle = selectedWheelStyle(color = Ink),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            cursorBrush = SolidColor(Accent),
+            decorationBox = { inner ->
+                Box(contentAlignment = Alignment.CenterStart) {
+                    if (value.isBlank()) Text("0", color = Muted, style = selectedWheelStyle(color = Muted))
+                    inner()
+                }
+            },
+        )
+        Text(unit, color = Muted, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+    }
+}
+
+/** Label above a text field, so the label never floats inside the box. */
+@Composable
+fun LabeledField(
+    value: String, onChange: (String) -> Unit, label: String, modifier: Modifier = Modifier,
+    keyboard: KeyboardType = KeyboardType.Text, singleLine: Boolean = true, minLines: Int = 1,
+) = Column(modifier) {
+    Text(
+        label, Modifier.padding(start = 4.dp, bottom = 6.dp),
+        color = Muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+    )
+    OutlinedTextField(
+        value, onChange, Modifier.fillMaxWidth(),
+        singleLine = singleLine, minLines = minLines,
+        shape = RoundedCornerShape(14.dp),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Accent, unfocusedBorderColor = GlassBorder,
+            focusedContainerColor = Glass, unfocusedContainerColor = Glass, cursorColor = Accent,
+        ),
+    )
 }
 
 /** Per-set wheel in a card: set label above three visible numbers. */
@@ -1177,35 +1275,23 @@ fun SetWheel(label: String, value: Int, range: IntRange, onChange: (Int) -> Unit
     NumberWheel(value, range, onChange, Modifier.fillMaxWidth(), rows = 3, itemHeight = 32.dp)
 }
 
-/** Lays out one cell per set in a fixed 4-column grid, so rows line up even when the last is short. */
+/** One equal-width cell per set; past six sets it wraps into fixed rows of four. */
 @Composable
-fun PerSetGrid(count: Int, cell: @Composable (Modifier, Int) -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-    (0 until count).chunked(4).forEach { row ->
+fun PerSetGrid(count: Int, modifier: Modifier = Modifier, cell: @Composable (Modifier, Int) -> Unit) =
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    if (count <= 6) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            repeat(4) { c ->
-                val i = row.getOrNull(c)
-                if (i != null) cell(Modifier.weight(1f), i) else Spacer(Modifier.weight(1f))
+            repeat(count) { i -> cell(Modifier.weight(1f), i) }
+        }
+    } else {
+        (0 until count).chunked(4).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                repeat(4) { c ->
+                    val i = row.getOrNull(c)
+                    if (i != null) cell(Modifier.weight(1f), i) else Spacer(Modifier.weight(1f))
+                }
             }
         }
-    }
-}
-
-/** Round button that opens or closes a per-set breakdown; announced as a switch. */
-@Composable
-fun BreakdownToggle(active: Boolean, description: String, onToggle: () -> Unit) = Box(
-    Modifier.size(48.dp).toggleable(active, role = Role.Switch) { onToggle() },
-    contentAlignment = Alignment.Center,
-) {
-    Box(
-        Modifier.size(34.dp).clip(CircleShape)
-            .background(if (active) Accent else Glass)
-            .border(1.dp, if (active) Accent else GlassBorder, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            Icons.AutoMirrored.Filled.List, description, Modifier.size(18.dp),
-            tint = if (active) OnAccent else Muted,
-        )
     }
 }
 
@@ -1256,30 +1342,27 @@ fun SortPlansDialog(plans: List<Plan>, onDismiss: () -> Unit, onSave: (List<Long
 }
 
 /** Compact per-set input: the set name sits above the field, so the field never has to float a label. */
+/** Compact per-set input: the set name sits above the box, so narrow cells never clip the number. */
 @Composable
 fun SetValueField(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) = Column(
     modifier, horizontalAlignment = Alignment.Start,
 ) {
     Text(label, color = Muted, style = MaterialTheme.typography.labelSmall, maxLines = 1,
         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
-    OutlinedTextField(
-        value, onChange, Modifier.fillMaxWidth(),
-        singleLine = true,
-        textStyle = MaterialTheme.typography.titleMedium.copy(color = Ink),
-        shape = RoundedCornerShape(14.dp),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Accent, unfocusedBorderColor = GlassBorder,
-            focusedContainerColor = Glass, unfocusedContainerColor = Glass, cursorColor = Accent,
-        ),
-    )
+    Box(
+        Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(14.dp))
+            .background(Glass).border(1.dp, GlassBorder, RoundedCornerShape(14.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        BasicTextField(
+            value, onChange, Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            singleLine = true,
+            textStyle = selectedWheelStyle(color = Ink).copy(textAlign = TextAlign.Center),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            cursorBrush = SolidColor(Accent),
+        )
+    }
 }
-
-@Composable
-fun BreakdownLabel(text: String) = Text(
-    text, color = Muted, style = MaterialTheme.typography.labelLarge,
-    modifier = Modifier.padding(start = 4.dp, top = 4.dp),
-)
 
 /** New exercises start from [defaults]: the sets, reps and weight of the last one added. */
 @Composable
@@ -1323,14 +1406,50 @@ fun ExerciseDialog(initial: Exercise?, defaults: ExerciseDefaults, onDismiss: ()
         else weightN != null && weightN >= 0 &&
             (!weightsSplit || List(sets) { weightValueAt(it) }.all { it != null && it >= 0 })
 
-    val weightsAction: (@Composable () -> Unit)? = if (sets > 1) {
-        {
-            BreakdownToggle(weightsSplit, stringResource(R.string.weights_per_set)) {
-                if (!weightsSplit) weightsPerSet = List(sets) { weight }
-                weightsSplit = !weightsSplit
-            }
+    val canSplit = sets > 1
+
+    fun toggleRepsSplit() {
+        if (!repsSplit) repsPerSet = List(sets) { reps }
+        repsSplit = !repsSplit
+    }
+    fun toggleWeightsSplit() {
+        if (!weightsSplit) weightsPerSet = List(sets) { weight }
+        weightsSplit = !weightsSplit
+    }
+
+    val perSetHint = stringResource(R.string.select_for_each_set)
+    val setsHeader: @Composable (Modifier) -> Unit = { modifier ->
+        FieldHeader(stringResource(R.string.sets), null, false, null, "", modifier)
+    }
+    val repsHeader: @Composable (Boolean, Modifier) -> Unit = { active, modifier ->
+        FieldHeader(
+            stringResource(R.string.reps), perSetHint, active,
+            if (canSplit) ::toggleRepsSplit else null, stringResource(R.string.reps_per_set), modifier,
+        )
+    }
+    val weightHeader: @Composable (Boolean, Modifier) -> Unit = { active, modifier ->
+        FieldHeader(
+            stringResource(if (active) R.string.weight_kg else R.string.weight), perSetHint, active,
+            if (canSplit) ::toggleWeightsSplit else null, stringResource(R.string.weights_per_set), modifier,
+        )
+    }
+    val weightCells: @Composable (Modifier) -> Unit = { modifier ->
+        PerSetGrid(sets, modifier) { m, i ->
+            SetValueField(
+                stringResource(R.string.set_number, i + 1), weightAt(i),
+                { v -> weightsPerSet = List(sets) { j -> if (j == i) v else weightAt(j) } }, m,
+            )
         }
-    } else null
+    }
+    val repsCells: @Composable (Modifier) -> Unit = { modifier ->
+        PerSetGrid(sets, modifier) { m, i ->
+            SetWheel(
+                stringResource(R.string.set_number, i + 1), repAt(i), repRange,
+                onChange = { v -> repsPerSet = List(sets) { j -> if (j == i) v else repAt(j) } },
+                modifier = m,
+            )
+        }
+    }
 
     AppDialog(
         stringResource(if (initial == null) R.string.new_exercise else R.string.edit_exercise),
@@ -1355,61 +1474,75 @@ fun ExerciseDialog(initial: Exercise?, defaults: ExerciseDefaults, onDismiss: ()
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Segmented(listOf(stringResource(R.string.strength), stringResource(R.string.cardio)), if (cardio) 1 else 0) { cardio = it == 1 }
-            Field(name, { name = it }, stringResource(if (cardio) R.string.exercise_cardio_hint else R.string.exercise))
+            LabeledField(
+                name, { name = it },
+                stringResource(if (cardio) R.string.exercise_cardio_hint else R.string.name),
+            )
             if (cardio) {
-                Field(minutes, { minutes = it }, stringResource(R.string.duration_min), keyboard = KeyboardType.Number)
-                Field(intensity, { intensity = it }, stringResource(R.string.intensity))
-            } else {
+                LabeledField(minutes, { minutes = it }, stringResource(R.string.duration_min), keyboard = KeyboardType.Number)
+                LabeledField(intensity, { intensity = it }, stringResource(R.string.intensity))
+            } else if (!repsSplit && !weightsSplit) {
+                // Sets, reps and weight share one row; labels sit above their boxes.
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    WheelField(stringResource(R.string.sets), sets, setRange, ::resizeSets, Modifier.weight(1f))
-                    WheelField(
-                        stringResource(R.string.reps), reps, repRange,
-                        onChange = { v ->
+                    Column(Modifier.weight(0.85f)) {
+                        setsHeader(Modifier)
+                        WheelCard(sets, setRange, ::resizeSets)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        repsHeader(false, Modifier)
+                        WheelCard(reps, repRange, { v ->
                             reps = v
                             if (repsSplit) repsPerSet = List(sets) { v }
-                        },
-                        modifier = Modifier.weight(1f),
-                        action = if (sets > 1) {
-                            {
-                                BreakdownToggle(repsSplit, stringResource(R.string.reps_per_set)) {
-                                    if (!repsSplit) repsPerSet = List(sets) { reps }
-                                    repsSplit = !repsSplit
-                                }
-                            }
-                        } else null,
-                    )
+                        })
+                    }
+                    Column(Modifier.weight(1.15f)) {
+                        weightHeader(false, Modifier)
+                        WeightCard(weight, { v ->
+                            weight = v
+                            if (weightsSplit) weightsPerSet = List(sets) { v }
+                        }, "kg")
+                    }
+                }
+            } else {
+                // A split field takes the full width, with the other numeric fields above it.
+                if (weightsSplit && !repsSplit) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Column(Modifier.weight(1f)) {
+                            setsHeader(Modifier)
+                            WheelCard(sets, setRange, ::resizeSets)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            repsHeader(false, Modifier)
+                            WheelCard(reps, repRange, { v ->
+                                reps = v
+                                if (repsSplit) repsPerSet = List(sets) { v }
+                            })
+                        }
+                    }
+                } else {
+                    Column(Modifier.width(104.dp)) {
+                        setsHeader(Modifier)
+                        WheelCard(sets, setRange, ::resizeSets)
+                    }
                 }
                 if (repsSplit) {
-                    BreakdownLabel(stringResource(R.string.reps_per_set))
-                    PerSetGrid(sets) { m, i ->
-                        SetWheel(
-                            stringResource(R.string.set_number, i + 1), repAt(i), repRange,
-                            onChange = { v -> repsPerSet = List(sets) { j -> if (j == i) v else repAt(j) } },
-                            modifier = m,
-                        )
+                    Column {
+                        repsHeader(true, Modifier)
+                        repsCells(Modifier)
                     }
                 }
-                Field(
-                    weight, { v ->
+                Column {
+                    weightHeader(weightsSplit, Modifier)
+                    if (weightsSplit) weightCells(Modifier)
+                    else WeightCard(weight, { v ->
                         weight = v
                         if (weightsSplit) weightsPerSet = List(sets) { v }
-                    },
-                    stringResource(R.string.weight_kg), keyboard = KeyboardType.Decimal, trailing = weightsAction,
-                )
-                if (weightsSplit) {
-                    BreakdownLabel(stringResource(R.string.weights_per_set))
-                    PerSetGrid(sets) { m, i ->
-                        SetValueField(
-                            stringResource(R.string.set_number, i + 1),
-                            weightAt(i),
-                            { v -> weightsPerSet = List(sets) { j -> if (j == i) v else weightAt(j) } },
-                            modifier = m,
-                        )
-                    }
+                    }, "kg")
                 }
-                Field(seat, { seat = it }, stringResource(R.string.seat_adjustment))
             }
-            Field(notes, { notes = it }, stringResource(R.string.other_adjustments), singleLine = false, minLines = 2)
+            if (!cardio) LabeledField(seat, { seat = it }, stringResource(R.string.seat_adjustment))
+            LabeledField(notes, { notes = it }, stringResource(R.string.other_adjustments),
+                singleLine = false, minLines = 2)
         }
     }
 }

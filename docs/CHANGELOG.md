@@ -3,6 +3,19 @@
 All notable changes to GymPlan. Newest first; versions match the git tags and the root `VERSION`
 file.
 
+## [Unreleased]
+
+### Changed
+
+- New / Edit exercise: labels sit above each field, Sets, Reps and Weight share one row, Seat and
+  Notes are relabelled, and the split control is an arrow icon with the hint "select for each set".
+  Sets and Reps use the same number wheels as before.
+
+### Fixed
+
+- Exercise screen: the weight summary of a per-set breakdown wraps onto its own line instead of
+  being squeezed into a narrow column when there are several sets.
+
 ## [0.4.0] - 2026-11-19
 
 ### Added

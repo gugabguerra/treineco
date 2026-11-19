@@ -73,14 +73,16 @@
     <string name="exercise">Exercício</string>
     <string name="exercise_cardio_hint">Exercício (ex.: Esteira)</string>
     <string name="sets">Séries</string>
-    <string name="reps">Repetições</string>
+    <string name="reps">Reps</string>
+    <string name="weight">Peso</string>
     <string name="reps_per_set">Repetições por série</string>
     <string name="weights_per_set">Cargas por série</string>
+    <string name="select_for_each_set">selecione para cada série</string>
     <string name="set_number">Série %d</string>
     <string name="duration_min">Duração (min)</string>
     <string name="intensity">Velocidade / inclinação / nível</string>
-    <string name="seat_adjustment">Ajuste do assento</string>
-    <string name="other_adjustments">Outros ajustes / notas</string>
+    <string name="seat_adjustment">Assento / ajuste</string>
+    <string name="other_adjustments">Notas</string>
 
     <!-- Dialogs -->
     <string name="save">Salvar</string>

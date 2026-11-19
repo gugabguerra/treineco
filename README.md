@@ -9,7 +9,8 @@ It is a single offline app. All data stays in one file in the app's private stor
 no account, no server, no network access. Uninstalling the app or clearing its data deletes
 everything.
 
-![GymPlan screens: plan with today's ticks, plan long-press menu, exercise detail with weight chart, body weight, new-exercise dialog, settings](docs/screenshots/overview.png)
+![GymPlan screens: plan with today's ticks, plan long-press menu, exercise detail with weight chart,
+body weight, new-exercise dialog, settings with data export/import](docs/screenshots/overview.png)
 
 Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no real records).
 
@@ -30,8 +31,9 @@ Single screens are in [`docs/screenshots/`](docs/screenshots/) (sample data, no 
   it.
 - Strength exercises store sets and reps picked with scrolling number wheels, weight in kg, seat
   adjustment and other adjustments / notes.
-- With more than one set, tap the list icon inside the Reps or Weight field to set different reps
-  or a different weight per set.
+- With more than one set, tap the arrow icon beside the Reps or Weight label (down to split, up to
+  join) to set different reps or a different weight per set. Per-set cells sit in one row up to
+  six sets, then wrap into rows of four.
 - The training list shows varying reps and weights per set (weights: at most three values, then
   `...`); a single set shows only its reps.
 - Cardio exercises (treadmill, bike, …) store duration in minutes, speed / incline / level and
@@ -104,9 +106,9 @@ adb logcat --pid=$(adb shell pidof gugabguerra.gymplan)
 
 Everything lives in `files/gym.json` inside the app's private storage, written atomically (temp
 file + rename). If the file cannot be parsed on startup it is renamed to `gym.json.bad-<epoch ms>`
-and the app starts empty instead of overwriting it. Settings → *Export data* writes the same JSON to
-a file you choose; *Import data* replaces all data with a file in that format, and rejects files
-that are not GymPlan backups. On a debug build you can also copy the file out with:
+and the app starts empty instead of overwriting it. Settings → *Export data* writes the same JSON
+to a file you choose; *Import data* replaces all data with a file in that format, and rejects
+files that are not GymPlan backups. On a debug build you can also copy the file out with:
 
 ```bash
 adb shell run-as gugabguerra.gymplan cat files/gym.json > gym-backup.json

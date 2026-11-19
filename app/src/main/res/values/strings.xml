@@ -73,13 +73,15 @@
     <string name="exercise_cardio_hint">Exercise (e.g. Treadmill)</string>
     <string name="sets">Sets</string>
     <string name="reps">Reps</string>
+    <string name="weight">Weight</string>
     <string name="reps_per_set">Reps per set</string>
     <string name="weights_per_set">Weights per set</string>
+    <string name="select_for_each_set">select for each set</string>
     <string name="set_number">Set %d</string>
     <string name="duration_min">Duration (min)</string>
     <string name="intensity">Speed / incline / level</string>
-    <string name="seat_adjustment">Seat adjustment</string>
-    <string name="other_adjustments">Other adjustments / notes</string>
+    <string name="seat_adjustment">Seat / adjustment</string>
+    <string name="other_adjustments">Notes</string>
 
     <!-- Dialogs -->
     <string name="save">Save</string>
